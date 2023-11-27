@@ -1,4 +1,6 @@
 ﻿using API_FutbolStats.Models;
+using API_FutbolStats.Models.DtoCreate;
+using API_FutbolStats.Models.DtoUpdate;
 
 namespace API_FutbolStats.Service.Interfaz
 {
@@ -7,9 +9,9 @@ namespace API_FutbolStats.Service.Interfaz
 
         Task<APIResponse> GetJugadores();
         Task<APIResponse> GetJugadorById(int id);
-        Task<APIResponse> AddJugador(Jugador jugador);
+        Task<APIResponse> AddJugador(JugadorDtoCreate jugadorDto);
         Task<APIResponse> DeleteJugador(int id);
-        Task<APIResponse> UpdateJugador();
+        Task<APIResponse> UpdateJugador(JugadorDtoUpdate jugadorDto, int id);
 
     }
 }

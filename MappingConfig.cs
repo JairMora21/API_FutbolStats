@@ -1,5 +1,7 @@
 ﻿using API_FutbolStats.Models;
 using API_FutbolStats.Models.Dto;
+using API_FutbolStats.Models.DtoCreate;
+using API_FutbolStats.Models.DtoUpdate;
 using AutoMapper;
 
 namespace API_FutbolStats
@@ -13,6 +15,13 @@ namespace API_FutbolStats
             CreateMap<ClasificacionTemporadum, ClasificacionTemporadaDto>().ReverseMap();
             CreateMap<TipoPartido, TipoPartidoDto>().ReverseMap();
             CreateMap<PosicionJugador, PosicionJugadorDto>().ReverseMap();
+
+            //Jugador
+            CreateMap<Jugador, JugadorDto>().ReverseMap();
+            CreateMap<Jugador, JugadorDtoCreate>().ReverseMap();
+            CreateMap<Jugador, JugadorDtoUpdate>().ReverseMap();
+
+
 
 
         }
