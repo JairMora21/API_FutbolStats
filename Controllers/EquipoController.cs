@@ -63,7 +63,7 @@ namespace API_FutbolStats.Controllers
         }
 
         [HttpPut]
-        [Route("UpdateJugador")]
+        [Route("UpdateJugador/{id}")]
         public async Task<IActionResult> AddJugador([FromBody] JugadorDtoUpdate jugadorDto, int id)
         {
             if (ModelState.IsValid)

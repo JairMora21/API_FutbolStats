@@ -26,6 +26,11 @@ namespace API_FutbolStats
             CreateMap<Temporadum, TemporadaDtoCreate>().ReverseMap();
             CreateMap<Temporadum, TemporadaDtoUpdate>().ReverseMap();
 
+            //Partido
+            CreateMap<Partido, PartidoDto>().ReverseMap();
+            CreateMap<Partido, PartidoDtoCreate>().ReverseMap();
+            CreateMap<Partido, PartidoDtoUpdate>().ReverseMap();
+
         }
     }
 }

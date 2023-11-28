@@ -45,13 +45,9 @@ namespace API_FutbolStats.Service.Implementacion
             }
             catch (Exception ex)
             {
-                // Manejo de la excepción. Puedes registrar el error, enviar notificaciones, etc.
-                _response.ErrorMessages = new List<string> { "Ocurrió un error al procesar la solicitud." };
+                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
                 _response.IsSuccess = false;
                 _response.statusCode = HttpStatusCode.InternalServerError;
-
-                // Aquí podrías registrar el error o imprimirlo en la consola.
-                Console.WriteLine($"Error: {ex.Message}");
 
                 return _response;
             }

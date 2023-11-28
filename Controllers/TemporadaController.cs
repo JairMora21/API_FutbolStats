@@ -24,7 +24,6 @@ namespace API_FutbolStats.Controllers
         [Route("Temporadas")]
         public async Task<IActionResult> Temporadas()
         {
-
             APIResponse response = await _service.GetTemporadas();
 
             return Ok(response);
@@ -68,7 +67,7 @@ namespace API_FutbolStats.Controllers
         }
 
         [HttpPut]
-        [Route("UpdateTemporada")]
+        [Route("UpdateTemporada/{id}")]
         public async Task<IActionResult> UpdateTemporada([FromBody] TemporadaDtoUpdate temporadaDto, int id)
         {
             APIResponse response = new APIResponse();
