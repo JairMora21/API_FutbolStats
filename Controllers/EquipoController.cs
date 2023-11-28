@@ -25,6 +25,7 @@ namespace API_FutbolStats.Controllers
         [Route("Jugadores")]
         public async Task<IActionResult> Jugadores()
         {
+
             APIResponse response = await _service.GetJugadores();
 
             return Ok(response);
@@ -43,9 +44,13 @@ namespace API_FutbolStats.Controllers
         [Route("AddJugador")]
         public async Task<IActionResult> AddJugador([FromBody] JugadorDtoCreate jugadorDto)
         {
-            APIResponse response = await _service.AddJugador(jugadorDto);
+            if (ModelState.IsValid)
+            {
+                APIResponse response = await _service.AddJugador(jugadorDto);
+                return Ok(response);
+            }
+            return BadRequest();
 
-            return Ok(response);
         }
 
         [HttpDelete]
@@ -59,11 +64,14 @@ namespace API_FutbolStats.Controllers
 
         [HttpPut]
         [Route("UpdateJugador")]
-        public async Task<IActionResult> AddJugador([FromBody] JugadorDtoUpdate jugadorDto ,int id)
+        public async Task<IActionResult> AddJugador([FromBody] JugadorDtoUpdate jugadorDto, int id)
         {
-            APIResponse response = await _service.UpdateJugador(jugadorDto, id);
-
-            return Ok(response);
+            if (ModelState.IsValid)
+            {
+                APIResponse response = await _service.UpdateJugador(jugadorDto, id);
+                return Ok(response);
+            }
+            return BadRequest();
         }
     }
 }

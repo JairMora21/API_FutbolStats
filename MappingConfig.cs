@@ -21,8 +21,10 @@ namespace API_FutbolStats
             CreateMap<Jugador, JugadorDtoCreate>().ReverseMap();
             CreateMap<Jugador, JugadorDtoUpdate>().ReverseMap();
 
-
-
+            //Temporada
+            CreateMap<Temporadum, TemporadaDto>().ReverseMap();
+            CreateMap<Temporadum, TemporadaDtoCreate>().ReverseMap();
+            CreateMap<Temporadum, TemporadaDtoUpdate>().ReverseMap();
 
         }
     }

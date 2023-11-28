@@ -191,5 +191,7 @@ namespace API_FutbolStats.Service.Implementacion
             }
 
         }
+
+     
     }
 }
