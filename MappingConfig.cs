@@ -10,7 +10,7 @@ namespace API_FutbolStats
     {
         public MappingConfig()
         {
-            //Atributos Mapping
+            //Atributos 
             CreateMap<TipoTarjetum, TipoTarjetaDto>().ReverseMap();
             CreateMap<ClasificacionTemporadum, ClasificacionTemporadaDto>().ReverseMap();
             CreateMap<TipoPartido, TipoPartidoDto>().ReverseMap();
@@ -30,6 +30,16 @@ namespace API_FutbolStats
             CreateMap<Partido, PartidoDto>().ReverseMap();
             CreateMap<Partido, PartidoDtoCreate>().ReverseMap();
             CreateMap<Partido, PartidoDtoUpdate>().ReverseMap();
+
+            //Goles 
+            CreateMap<Gole, GolesDto>().ReverseMap();
+            CreateMap<Gole, GolesDtoCreate>().ReverseMap();
+            CreateMap<Gole, GolesDtoUpdate>().ReverseMap();
+
+            //Tarjetas
+            CreateMap<Tarjetum, TarjetaDto>().ReverseMap();
+            CreateMap<Tarjetum, TarjetaDtoCreate>().ReverseMap();
+            CreateMap<Tarjetum, TarjetaDtoUpdate>().ReverseMap();
 
         }
     }

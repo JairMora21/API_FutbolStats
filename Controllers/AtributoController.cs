@@ -9,11 +9,11 @@ namespace API_FutbolStats.Controllers
     [Route("api/[controller]")]
     [ApiController]
     //[Authorize]
-    public class AtributosController : ControllerBase
+    public class AtributoController : ControllerBase
     {
         private readonly IAtributosService _atributos;
 
-        public AtributosController(IAtributosService atributo)
+        public AtributoController(IAtributosService atributo)
         {
             _atributos = atributo;
         }

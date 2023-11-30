@@ -61,6 +61,10 @@ builder.Services.AddScoped<IAtributosService, AtributosService>();
 builder.Services.AddScoped<IEquipoService, EquipoService>();
 builder.Services.AddScoped<IPartidoService, PartidoService>();
 builder.Services.AddScoped<ITemporadaService, TemporadaService>();
+builder.Services.AddScoped<IGolService, GolService>();
+builder.Services.AddScoped<ITarjetaService, TarjetaService>();
+builder.Services.AddScoped<IPartidoJugadoService, PartidoJugadoService>();
+
 
 
 
