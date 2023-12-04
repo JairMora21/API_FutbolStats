@@ -39,7 +39,7 @@ namespace API_FutbolStats.Controllers
 
             return Ok(response);
         }
-
+     
         [HttpPost]
         [Route("AddJugador")]
         public async Task<IActionResult> AddJugador([FromBody] JugadorDtoCreate jugadorDto)
@@ -72,6 +72,34 @@ namespace API_FutbolStats.Controllers
                 return Ok(response);
             }
             return BadRequest();
+        }
+
+        [HttpGet]
+        [Route("JugadorStats/{idJugador}/{idTemporada}")]
+        public async Task<IActionResult> JugadorStats(int idJugador, int idTemporada)
+        {
+
+            APIResponse response = await _service.GetStatsJugador(idJugador, idTemporada);
+
+            return Ok(response);
+        }
+        [HttpGet]
+        [Route("EquipoTemporadaStats/{idEquipo}/{idTemporada}")]
+        public async Task<IActionResult> EquipoTemporadaStats(int idEquipo, int idTemporada)
+        {
+
+            APIResponse response = await _service.GetStatsEquipoTemporada(idEquipo, idTemporada);
+
+            return Ok(response);
+        }
+        [HttpGet]
+        [Route("EquipoHistoricoStats/{idEquipo}")]
+        public async Task<IActionResult> EquipoHistoricoStats(int idEquipo)
+        {
+
+            APIResponse response = await _service.GetStatsEquipoHistorico(idEquipo);
+
+            return Ok(response);
         }
     }
 }

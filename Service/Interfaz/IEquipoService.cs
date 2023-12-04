@@ -12,6 +12,11 @@ namespace API_FutbolStats.Service.Interfaz
         Task<APIResponse> AddJugador(JugadorDtoCreate jugadorDto);
         Task<APIResponse> DeleteJugador(int id);
         Task<APIResponse> UpdateJugador(JugadorDtoUpdate jugadorDto, int id);
+        Task<APIResponse> GetStatsJugador(int id, int idTemporada);
+        Task<APIResponse> GetStatsEquipoTemporada(int idEquipo, int idTemporada);
+        Task<APIResponse> GetStatsEquipoHistorico(int idEquipo);
+
+
 
     }
 }
