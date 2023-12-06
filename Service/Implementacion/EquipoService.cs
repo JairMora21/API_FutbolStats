@@ -285,43 +285,72 @@ namespace API_FutbolStats.Service.Implementacion
 
         }
 
-        public async Task<APIResponse> GetStatsEquipoTemporada(int idEquipo, int idTemporada)
+        private async Task<Dictionary<string, object>> ValidarExistencia(int idEquipo, int? idTemporada)
+        {
+            Dictionary<string, object> existencia = new()
+            {
+                ["Success"] = true,
+                ["Message"] = "Todas las entidades existen"
+            };
+
+            var equipoExistente = await _context.Equipos.AnyAsync(j => j.Id == idEquipo);
+
+            if (!equipoExistente)
+            {
+                existencia["Success"] = false;
+                existencia["Message"] = "Equipo no existe";
+
+                return existencia;
+            }
+
+            if (idTemporada.HasValue)
+            {
+                var temporadaExistente = await _context.Temporada.AnyAsync(t => t.Id == idTemporada.Value);
+
+                if (!temporadaExistente)
+                {
+                    existencia["Success"] = false;
+                    existencia["Message"] = "Temporada no existe";
+
+                    return existencia;
+                }
+            }
+            return existencia;
+
+        }
+
+        public async Task<APIResponse> GetStatsEquipo(int idEquipo, int? idTemporada)
         {
             EquipoStats equitoStats = new EquipoStats();
 
             try
             {
-                // Validar si el equipo existe
-                var equipoExistente = await _context.Equipos
-                    .AnyAsync(j => j.Id == idEquipo);
+                Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
 
-                // Validar si la temporada existe
-                var temporadaExistente = await _context.Temporada
-                    .AnyAsync(t => t.Id == idTemporada);
-
-                if (!equipoExistente || !temporadaExistente)
+                if (!(bool)existencia["Success"])
                 {
                     _response.IsSuccess = false;
                     _response.statusCode = HttpStatusCode.BadRequest;
-                    _response.ErrorMessages = new List<string> { $"Error: no se encontro el equipo o la temporada" };
+                    _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
                     return _response;
                 }
+
                 var statsPartidos = await _context.Partidos
-                    .Where(x => x.IdEquipo == idEquipo && x.IdTemporada == idTemporada)
-                    .GroupBy(x => x.IdEquipo)
-                    .Select(x => new
-                    {
-                        PartidosJugados = x.Count(),
-                        PartidosGanados = x.Count(x => x.IdResultado == 1),
-                        PartidosEmpatado = x.Count(x => x.IdResultado == 2),
-                        PartidosPerdido = x.Count(x => x.IdResultado == 3),
-                        GolesFavor = x.Sum(x => x.GolesFavor),
-                        GolesContra = x.Sum(x => x.GolesContra),
-                    })
-                    .FirstOrDefaultAsync();
+                   .Where(x => x.IdEquipo == idEquipo && (!idTemporada.HasValue || x.IdTemporada == idTemporada))
+                   .GroupBy(x => x.IdEquipo)
+                   .Select(x => new
+                   {
+                       PartidosJugados = x.Count(),
+                       PartidosGanados = x.Count(x => x.IdResultado == 1),
+                       PartidosEmpatado = x.Count(x => x.IdResultado == 2),
+                       PartidosPerdido = x.Count(x => x.IdResultado == 3),
+                       GolesFavor = x.Sum(x => x.GolesFavor),
+                       GolesContra = x.Sum(x => x.GolesContra),
+                   })
+                   .FirstOrDefaultAsync();
 
                 var statsTarjetas = await _context.Tarjeta
-                   .Where(x => x.IdEquipo == idEquipo && x.IdTemporada == idTemporada)
+                   .Where(x => x.IdEquipo == idEquipo && (!idTemporada.HasValue || x.IdTemporada == idTemporada))
                    .GroupBy(x => x.IdEquipo)
                    .Select(x => new
                    {
@@ -349,6 +378,7 @@ namespace API_FutbolStats.Service.Implementacion
                 _response.Result = equitoStats;
                 _response.statusCode = HttpStatusCode.OK;
                 return _response;
+
             }
             catch (Exception ex)
             {
@@ -360,67 +390,39 @@ namespace API_FutbolStats.Service.Implementacion
 
         }
 
-        public async Task<APIResponse> GetStatsEquipoHistorico(int idEquipo)
+        public async Task<APIResponse> GetStatsGoleador(int idEquipo, int? idTemporada)
         {
-            EquipoStats equitoStats = new EquipoStats();
-
             try
             {
-                // Validar si el equipo existe
-                var equipoExistente = await _context.Equipos
-                    .AnyAsync(j => j.Id == idEquipo);
+                Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
 
-           
-                if (!equipoExistente)
+                if (!(bool)existencia["Success"])
                 {
                     _response.IsSuccess = false;
                     _response.statusCode = HttpStatusCode.BadRequest;
-                    _response.ErrorMessages = new List<string> { $"Error: no se encontro el equipo" };
+                    _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
                     return _response;
                 }
-                var statsPartidos = await _context.Partidos
-                    .Where(x => x.IdEquipo == idEquipo)
-                    .GroupBy(x => x.IdEquipo)
-                    .Select(x => new
-                    {
-                        PartidosJugados = x.Count(),
-                        PartidosGanados = x.Count(x => x.IdResultado == 1),
-                        PartidosEmpatado = x.Count(x => x.IdResultado == 2),
-                        PartidosPerdido = x.Count(x => x.IdResultado == 3),
-                        GolesFavor = x.Sum(x => x.GolesFavor),
-                        GolesContra = x.Sum(x => x.GolesContra),
-                    })
-                    .FirstOrDefaultAsync();
 
-                var statsTarjetas = await _context.Tarjeta
-                   .Where(x => x.IdEquipo == idEquipo)
-                   .GroupBy(x => x.IdEquipo)
-                   .Select(x => new
-                   {
-                       Rojas = x.Count(x => x.IdTipoTarjeta == 1),
-                       Amarillas = x.Count(x => x.IdTipoTarjeta == 2),
-                   })
-                   .FirstOrDefaultAsync();
+                List<TopListasDtoStats> result = await (from g in _context.Goles
+                                                        join j in _context.Jugadors on g.IdJugador equals j.Id
+                                                        where g.IdEquipo == idEquipo &&
+                                                              (!idTemporada.HasValue || g.IdTemporada == idTemporada)
+                                                        group g by new { j.Id, j.Nombre } into grouped
+                                                        select new TopListasDtoStats
+                                                        {
+                                                            Id = grouped.Key.Id,
+                                                            Nombre = grouped.Key.Nombre,
+                                                            Cantidad = grouped.Count()
+                                                        })
+                          .OrderByDescending(x => x.Cantidad)
+                          .ToListAsync();
 
-                if (statsPartidos != null)
-                {
-                    equitoStats.PartidosJugados = statsPartidos.PartidosJugados;
-                    equitoStats.PartidosGanados = statsPartidos.PartidosGanados;
-                    equitoStats.PartidosEmpatados = statsPartidos.PartidosEmpatado;
-                    equitoStats.PartidosPerdidos = statsPartidos.PartidosPerdido;
-                    equitoStats.GolesAnotados = statsPartidos.GolesFavor;
-                    equitoStats.GolesRecibidos = statsPartidos.GolesContra;
-                    equitoStats.GolesDiferencia = statsPartidos.GolesFavor - statsPartidos.GolesContra;
-                }
-
-                if (statsTarjetas != null)
-                {
-                    equitoStats.Amarillas = statsTarjetas.Amarillas;
-                    equitoStats.Rojas = statsTarjetas.Rojas;
-                }
-                _response.Result = equitoStats;
+                _response.Result = result;
                 _response.statusCode = HttpStatusCode.OK;
+
                 return _response;
+
             }
             catch (Exception ex)
             {
@@ -429,6 +431,111 @@ namespace API_FutbolStats.Service.Implementacion
                 _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
                 return _response;
             }
+        }
+        
+
+        public async Task<APIResponse> GetStatsPartidos(int idEquipo, int? idTemporada)
+        {
+            Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
+
+            if (!(bool)existencia["Success"])
+            {
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
+                return _response;
+            }
+
+            List<TopListasDtoStats> result = await (from p in _context.PartidosJugados
+                                                    join j in _context.Jugadors on p.IdJugador equals j.Id
+                                                    where p.IdEquipo == idEquipo &&
+                                                          (!idTemporada.HasValue || p.IdTemporada == idTemporada)
+                                                    group p by new { j.Id, j.Nombre } into grouped
+                                                    select new TopListasDtoStats
+                                                    {
+                                                        Id = grouped.Key.Id,
+                                                        Nombre = grouped.Key.Nombre,
+                                                        Cantidad = grouped.Count()
+                                                    })
+                          .OrderByDescending(x => x.Cantidad)
+                          .ToListAsync();
+
+            _response.Result = result;
+            _response.statusCode = HttpStatusCode.OK;
+
+            return _response;
+        }
+
+        public async Task<APIResponse> GetStatsAmarillas(int idEquipo, int? idTemporada)
+        {
+            Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
+
+            if (!(bool)existencia["Success"])
+            {
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
+                return _response;
+            }
+
+            List<TopListasDtoStats> result = await (from t in _context.Tarjeta
+                                                    join j in _context.Jugadors on t.IdJugador equals j.Id
+                                                    where t.IdEquipo == idEquipo 
+                                                    && t.IdTipoTarjeta == (int)TipoTarjeta.Amarilla 
+                                                    && (!idTemporada.HasValue || t.IdTemporada == idTemporada)
+                                                    group t by new { j.Id, j.Nombre } into grouped
+                                                    select new TopListasDtoStats
+                                                    {
+                                                        Id = grouped.Key.Id,
+                                                        Nombre = grouped.Key.Nombre,
+                                                        Cantidad = grouped.Count()
+                                                    })
+                         .OrderByDescending(x => x.Cantidad)
+                         .ToListAsync();
+
+            _response.Result = result;
+            _response.statusCode = HttpStatusCode.OK;
+
+            return _response;
+        }
+
+        public async  Task<APIResponse> GetStatsRojas(int idEquipo, int? idTemporada)
+        {
+            Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
+
+            if (!(bool)existencia["Success"])
+            {
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
+                return _response;
+            }
+
+            List<TopListasDtoStats> result = await (from t in _context.Tarjeta
+                                                    join j in _context.Jugadors on t.IdJugador equals j.Id
+                                                    where t.IdEquipo == idEquipo
+                                                    && t.IdTipoTarjeta == (int)TipoTarjeta.Roja
+                                                    && (!idTemporada.HasValue || t.IdTemporada == idTemporada)
+                                                    group t by new { j.Id, j.Nombre } into grouped
+                                                    select new TopListasDtoStats
+                                                    {
+                                                        Id = grouped.Key.Id,
+                                                        Nombre = grouped.Key.Nombre,
+                                                        Cantidad = grouped.Count()
+                                                    })
+                     .OrderByDescending(x => x.Cantidad)
+                     .ToListAsync();
+
+            _response.Result = result;
+            _response.statusCode = HttpStatusCode.OK;
+
+            return _response;
+        }
+
+        public enum TipoTarjeta
+        {
+            Roja = 1,
+            Amarilla = 2,
         }
     }
 }

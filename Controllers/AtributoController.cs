@@ -17,6 +17,8 @@ namespace API_FutbolStats.Controllers
         {
             _atributos = atributo;
         }
+        //Este controlador nos dara todos los atributos de la app
+
         [HttpGet]
         [Route("Tarjetas")]
         [ProducesResponseType(StatusCodes.Status200OK)]
