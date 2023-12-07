@@ -5,12 +5,12 @@ using API_FutbolStats.Service.Interfaz;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API_FutbolStats.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-
     public class TemporadaController : ControllerBase
     {
         private readonly ITemporadaService _service;
@@ -40,6 +40,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpPost]
         [Route("AddTemporada")]
+        [Authorize]
         public async Task<IActionResult> AddTemporada([FromBody] TemporadaDtoCreate temporadaDto)
         {
             APIResponse response = new APIResponse();
@@ -52,13 +53,14 @@ namespace API_FutbolStats.Controllers
 
             response.statusCode = HttpStatusCode.BadRequest;
             response.IsSuccess = false;
-   
+
 
             return BadRequest(response);
         }
 
         [HttpDelete]
         [Route("DeleteTemporada/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteTemporada(int id)
         {
             APIResponse response = await _service.DeleteTemporada(id);
@@ -68,6 +70,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpPut]
         [Route("UpdateTemporada/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateTemporada([FromBody] TemporadaDtoUpdate temporadaDto, int id)
         {
             APIResponse response = new APIResponse();
@@ -76,7 +79,7 @@ namespace API_FutbolStats.Controllers
                 response = await _service.UpdateTemporada(temporadaDto, id);
                 return Ok(response);
             }
-      
+
 
             return BadRequest(response);
         }

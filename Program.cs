@@ -90,6 +90,15 @@ builder.Services.AddAuthentication(config =>
     };
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("NuevaPolitica", app =>
+    {
+        app.AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader();        
+    });
+});
 
 var app = builder.Build();
 
@@ -102,6 +111,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("NuevaPolitica");
 app.UseAuthentication();
 app.UseAuthorization();
 

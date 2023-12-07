@@ -6,11 +6,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using API_FutbolStats.Models.Dto;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API_FutbolStats.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
     public class PartidosJugadorController : ControllerBase
     {
 
@@ -21,20 +23,12 @@ namespace API_FutbolStats.Controllers
             _service = service;
         }
 
+        //Obtiene los jugadores que jugaron el partido seleccionado
         [HttpGet]
         [Route("JugadosPorPartido/{idPartido}")]
         public async Task<IActionResult> JugadosPorPartido(int idPartido)
         {
             APIResponse response = await _service.GetPartidosJugador(idPartido);
-
-            return Ok(response);
-        }
-
-        [HttpGet]
-        [Route("JugadosJugadorPorTemp/{idJugador}/{idTemporada}")]
-        public async Task<IActionResult> JugadosJugadorPorTemp(int idPartido, int idTemporada)
-        {
-            APIResponse response = await _service.GetPartidosJugadorPorTemporada(idTemporada, idPartido);
 
             return Ok(response);
         }
@@ -50,6 +44,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpPost]
         [Route("AddPartidoJugado")]
+        [Authorize]
         public async Task<IActionResult> AddPartidoJugado([FromBody] PartidoJugadoDtoCreate jugadoDto)
         {
             APIResponse response = new APIResponse();
@@ -68,6 +63,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpDelete]
         [Route("DeleteGol/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeletePartido(int id)
         {
             APIResponse response = await _service.DeletePartidoJugador(id);
@@ -77,6 +73,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpPut]
         [Route("UpdateGol/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdatePartido([FromBody] PartidoJugadoDtoUpdate jugadoDto, int id)
         {
             APIResponse response = new APIResponse();

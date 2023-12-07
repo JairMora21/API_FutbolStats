@@ -8,7 +8,6 @@ namespace API_FutbolStats.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
     public class AtributoController : ControllerBase
     {
         private readonly IAtributosService _atributos;

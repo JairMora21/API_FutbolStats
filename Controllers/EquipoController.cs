@@ -10,7 +10,6 @@ namespace API_FutbolStats.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
     public class EquipoController : ControllerBase
     {
 
@@ -42,9 +41,10 @@ namespace API_FutbolStats.Controllers
 
             return Ok(response);
         }
-     
+
         [HttpPost]
         [Route("AddJugador")]
+        [Authorize]
         public async Task<IActionResult> AddJugador([FromBody] JugadorDtoCreate jugadorDto)
         {
             if (ModelState.IsValid)
@@ -58,6 +58,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpDelete]
         [Route("DeleteJugador/{id}")]
+        [Authorize]
         public async Task<IActionResult> AddJugador(int id)
         {
             APIResponse response = await _service.DeleteJugador(id);
@@ -67,6 +68,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpPut]
         [Route("UpdateJugador/{id}")]
+        [Authorize]
         public async Task<IActionResult> AddJugador([FromBody] JugadorDtoUpdate jugadorDto, int id)
         {
             if (ModelState.IsValid)
@@ -98,7 +100,7 @@ namespace API_FutbolStats.Controllers
 
             return Ok(response);
         }
- 
+
         //Nos dara la lista de top goleadores del equipo
         [HttpGet]
         [Route("TopGoleadores/{idEquipo}")]

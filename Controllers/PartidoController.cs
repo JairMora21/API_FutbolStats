@@ -5,9 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using API_FutbolStats.Service.Interfaz;
 using API_FutbolStats.Models.Dto;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API_FutbolStats.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class PartidoController : Controller
     {
 
@@ -38,6 +41,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpPost]
         [Route("AddPartido")]
+        [Authorize]
         public async Task<IActionResult> AddPartido([FromBody] PartidoDtoCreate partidoDto)
         {
             APIResponse response = new APIResponse();
@@ -56,6 +60,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpDelete]
         [Route("DeletePartido/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeletePartido(int id)
         {
             APIResponse response = await _service.DeletePartido(id);
@@ -65,6 +70,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpPut]
         [Route("UpdatePartido/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdatePartido([FromBody] PartidoDtoUpdate partidoDto, int id)
         {
             APIResponse response = new APIResponse();

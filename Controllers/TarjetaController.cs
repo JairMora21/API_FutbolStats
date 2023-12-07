@@ -5,11 +5,13 @@ using API_FutbolStats.Service.Interfaz;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API_FutbolStats.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
     public class TarjetaController : ControllerBase
     {
         private readonly ITarjetaService _service;
@@ -28,15 +30,6 @@ namespace API_FutbolStats.Controllers
         }
 
         [HttpGet]
-        [Route("TarjetaJugadorPorTemp/{idJugador}/{idTemporada}")]
-        public async Task<IActionResult> TarjetaJugadorPorTemp(int idPartido, int idTemporada)
-        {
-            APIResponse response = await _service.GetTarjetasJugadorPorTemporada(idTemporada, idPartido);
-
-            return Ok(response);
-        }
-
-        [HttpGet]
         [Route("Tarjeta/{id}")]
         public async Task<IActionResult> Gol(int id)
         {
@@ -47,6 +40,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpPost]
         [Route("AddTarjeta")]
+        [Authorize]
         public async Task<IActionResult> AddTarjeta([FromBody] TarjetaDtoCreate tarjetaDto)
         {
             APIResponse response = new APIResponse();
@@ -65,6 +59,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpDelete]
         [Route("DeleteTarjeta/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeletePartido(int id)
         {
             APIResponse response = await _service.DeleteTarjetas(id);
@@ -74,6 +69,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpPut]
         [Route("UpdatePartido/{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdatePartido([FromBody] TarjetaDtoUpdate tarjetaDto, int id)
         {
             APIResponse response = new APIResponse();
