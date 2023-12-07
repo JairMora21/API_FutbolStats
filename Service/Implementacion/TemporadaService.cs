@@ -27,17 +27,35 @@ namespace API_FutbolStats.Service.Implementacion
         {
             try
             {
-                Temporadum temporadum = await _context.Temporada.FindAsync(id);
+                var existeTemporada = await _context.Temporada.AnyAsync(x => x.Id == id);
 
-                if (temporadum == null || id <= 0)
+                if (!existeTemporada)
                 {
                     _response.ErrorMessages = new List<string> { "No se encontró la temporada" };
                     _response.IsSuccess = false;
                     _response.statusCode = HttpStatusCode.NotFound;
                     return _response;
                 }
-                TemporadaDto temporadaDto = _mapper.Map<TemporadaDto>(temporadum);
-                _response.Result = temporadaDto;
+
+                TemporadaDto temporada = await _context.Temporada
+                                    .Where(x => x.Id == id)
+                                    .Include(x => x.IdClasificacionNavigation)
+                                    .Include(x => x.IdEquipoNavigation)
+                                    .Select(x => new TemporadaDto
+                                    {
+                                        Id = x.Id,
+                                        Clasificacion = x.IdClasificacionNavigation.Clasificacion,
+                                        Equipo = x.IdEquipoNavigation.Nombre,
+                                        NoTemporada = x.NoTemporada,
+                                        NombreTemporada = x.NombreTemporada,
+                                        FechaInicio = x.FechaInicio,
+                                        FechaFinal = x.FechaFinal,
+                                        Posicion = x.Posicion
+                                    })
+                                    .FirstOrDefaultAsync();
+
+               
+                _response.Result = temporada;
                 _response.statusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
 
@@ -57,7 +75,21 @@ namespace API_FutbolStats.Service.Implementacion
         {
             try
             {
-                IEnumerable<Temporadum> temporadas = await _context.Temporada.ToListAsync();
+                IEnumerable<TemporadaDto> temporadas = await _context.Temporada
+                    .Include(x => x.IdClasificacionNavigation)
+                    .Include(x => x.IdEquipoNavigation)
+                    .Select(x => new TemporadaDto
+                    {
+                        Id = x.Id,
+                        Clasificacion = x.IdClasificacionNavigation.Clasificacion,
+                        Equipo = x.IdEquipoNavigation.Nombre,
+                        NoTemporada = x.NoTemporada,
+                        NombreTemporada = x.NombreTemporada,
+                        FechaInicio = x.FechaInicio,
+                        FechaFinal = x.FechaFinal,
+                        Posicion = x.Posicion
+                    })
+                    .ToListAsync();
 
                 if (temporadas == null)
                 {
@@ -66,11 +98,8 @@ namespace API_FutbolStats.Service.Implementacion
                     _response.statusCode = HttpStatusCode.NotFound;
                     return _response;
                 }
-                List<TemporadaDto> temporadaDtos = temporadas
-                    .Select(temp => _mapper.Map<TemporadaDto>(temp))
-                    .ToList();
-
-                _response.Result = temporadaDtos;
+                
+                _response.Result = temporadas;
                 _response.IsSuccess = true;
                 _response.statusCode = HttpStatusCode.OK;
 
@@ -78,7 +107,7 @@ namespace API_FutbolStats.Service.Implementacion
             }
             catch (Exception ex)
             {
-                _response.ErrorMessages = new List<string> { "Ocurrió un error al procesar la solicitud." };
+                _response.ErrorMessages = new List<string> { $"Error:{ex}" };
                 _response.IsSuccess = false;
                 _response.statusCode = HttpStatusCode.InternalServerError;
                 return _response;

@@ -1,12 +1,14 @@
 ﻿using API_FutbolStats.Models;
 using API_FutbolStats.Models.Dto;
 using API_FutbolStats.Models.DtoCreate;
+using API_FutbolStats.Models.DtoStats;
 using API_FutbolStats.Models.DtoUpdate;
 using API_FutbolStats.Service.Interfaz;
 using AutoMapper;
 using Azure;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using static API_FutbolStats.Service.Implementacion.EquipoService;
 
 namespace API_FutbolStats.Service.Implementacion
 {
@@ -23,7 +25,7 @@ namespace API_FutbolStats.Service.Implementacion
             _mapper = mapper;
             _response = new APIResponse();
         }
-        public async  Task<APIResponse> GetTarjetasById(int id)
+        public async Task<APIResponse> GetTarjetasById(int id)
         {
             try
             {
@@ -53,58 +55,32 @@ namespace API_FutbolStats.Service.Implementacion
             }
         }
 
-        public async Task<APIResponse> GetTarjetasJugadorPorTemporada(int idTemporada, int idJugador)
-        {
-            try
-            {
-                IEnumerable<Tarjetum> tarjeta= await _context.Tarjeta.Where(x => x.IdTemporada == idTemporada && x.IdJugador == idJugador)
-                    .ToListAsync();
-
-                if (tarjeta == null)
-                {
-                    _response.ErrorMessages = new List<string> { "No se encontraron las tarjetas" };
-                    _response.IsSuccess = false;
-                    _response.statusCode = HttpStatusCode.NotFound;
-                    return _response;
-                }
-                List<TarjetaDto> tarjetaDto = tarjeta
-                    .Select(x => _mapper.Map<TarjetaDto>(x))
-                    .ToList();
-
-                _response.Result = tarjetaDto;
-                _response.IsSuccess = true;
-                _response.statusCode = HttpStatusCode.OK;
-
-                return _response;
-            }
-            catch (Exception ex)
-            {
-                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
-                _response.IsSuccess = false;
-                _response.statusCode = HttpStatusCode.InternalServerError;
-                return _response;
-            }
-        }
-
         public async Task<APIResponse> GetTarjetasPartido(int idPartido)
         {
             try
             {
-                IEnumerable<Tarjetum> tarjeta = await _context.Tarjeta.Where(x => x.IdPartido == idPartido)
-                    .ToListAsync();
+                var partido = await _context.Partidos.AnyAsync(x => x.Id == idPartido);
 
-                if (tarjeta == null)
+                if (!partido)
                 {
-                    _response.ErrorMessages = new List<string> { "No se encontraron las tarjetas" };
+                    _response.ErrorMessages = new List<string> { "No se encontro el partido" };
                     _response.IsSuccess = false;
                     _response.statusCode = HttpStatusCode.NotFound;
                     return _response;
                 }
-                List<TarjetaDto> tarjetaDto = tarjeta
-                    .Select(x => _mapper.Map<TarjetaDto>(x))
-                    .ToList();
+                List<TarjetaPartidoDtoStats> result = await (from g in _context.Tarjeta
+                                                             join j in _context.Jugadors on g.IdJugador equals j.Id
+                                                             join tt in _context.TipoTarjeta on g.IdTipoTarjeta equals tt.Id
+                                                             where g.IdPartido == idPartido
+                                                             select new TarjetaPartidoDtoStats
+                                                             {
+                                                                 Nombre = j.Nombre,
+                                                                 Tarjeta = tt.Tarjeta,
+                                                                 idTipoTarjeta = tt.Id
+                                                             })
+                                                             .ToListAsync();
 
-                _response.Result = tarjetaDto;
+                _response.Result = result;
                 _response.IsSuccess = true;
                 _response.statusCode = HttpStatusCode.OK;
 

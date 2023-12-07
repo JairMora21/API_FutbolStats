@@ -29,7 +29,22 @@ namespace API_FutbolStats.Service.Implementacion
         {
             try
             {
-                IEnumerable<Jugador> jugadores = await _context.Jugadors.ToListAsync();
+                List<JugadorDto> jugadores = await _context.Jugadors
+                    .Include(x => x.IdEquipoNavigation)
+                    .Include(x => x.IdPosicionNavigation)
+                    .Select(p => new JugadorDto
+                    {
+                        Id = p.Id,
+                        Posicion = p.IdPosicionNavigation.Posicion,
+                        Equipo = p.IdEquipoNavigation.Nombre,
+                        Nombre = p.Nombre,
+                        Apellido = p.Apellido,
+                        Img = p.Img,
+                        Dorsal = p.Dorsal,
+                        Activo = p.Activo
+
+                    })
+                    .ToListAsync();
 
                 if (jugadores == null)
                 {
@@ -38,12 +53,7 @@ namespace API_FutbolStats.Service.Implementacion
                     return _response;
                 }
 
-                //Se mapean los jugadores de la lista obtenida anteriormente
-                List<JugadorDto> jugadoresDto = jugadores
-                    .Select(jugador => _mapper.Map<JugadorDto>(jugador))
-                    .ToList();
-
-                _response.Result = jugadoresDto;
+                _response.Result = jugadores;
                 _response.IsSuccess = true;
                 _response.statusCode = HttpStatusCode.OK;
 
@@ -53,28 +63,44 @@ namespace API_FutbolStats.Service.Implementacion
             {
                 _response.IsSuccess = false;
                 _response.statusCode = HttpStatusCode.InternalServerError;
-                _response.Result = $"Error: {ex.Message}";
+                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
 
                 return _response;
             }
 
         }
-
         public async Task<APIResponse> GetJugadorById(int id)
         {
             try
             {
-                Jugador jugador = await _context.Jugadors.FindAsync(id);
+                var existeJugador = await _context.Jugadors.AnyAsync(x => x.Id == id);
 
-                if (jugador == null || id <= 0)
+                if (!existeJugador)
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
                     return _response;
                 }
 
-                JugadorDto jugadorDto = _mapper.Map<JugadorDto>(jugador);
-                _response.Result = jugadorDto;
+                JugadorDto jugador = await _context.Jugadors
+                     .Where(j => j.Id == id)
+                     .Include(x => x.IdEquipoNavigation)
+                     .Include(x => x.IdPosicionNavigation)
+                     .Select(p => new JugadorDto
+                     {
+                         Id = p.Id,
+                         Posicion = p.IdPosicionNavigation.Posicion,
+                         Equipo = p.IdEquipoNavigation.Nombre,
+                         Nombre = p.Nombre,
+                         Apellido = p.Apellido,
+                         Img = p.Img,
+                         Dorsal = p.Dorsal,
+                         Activo = p.Activo
+                     })
+                      .FirstOrDefaultAsync();
+
+
+                _response.Result = jugador;
                 _response.IsSuccess = true;
                 _response.statusCode = HttpStatusCode.OK;
 
@@ -85,13 +111,12 @@ namespace API_FutbolStats.Service.Implementacion
                 // Manejar la excepción de manera específica, registrarla, etc.
                 _response.IsSuccess = false;
                 _response.statusCode = HttpStatusCode.InternalServerError;
-                _response.Result = $"Error: {ex.Message}";
+                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
 
                 return _response;
             }
 
         }
-
 
         public async Task<APIResponse> AddJugador(JugadorDtoCreate jugadorDto)
         {
@@ -120,13 +145,12 @@ namespace API_FutbolStats.Service.Implementacion
                 // Manejar la excepción de manera específica, registrarla, etc.
                 _response.IsSuccess = false;
                 _response.statusCode = HttpStatusCode.InternalServerError;
-                _response.Result = $"Error al agregar jugador: {ex.Message}";
+                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
 
                 return _response;
             }
 
         }
-
 
         public async Task<APIResponse> DeleteJugador(int id)
         {
@@ -432,104 +456,137 @@ namespace API_FutbolStats.Service.Implementacion
                 return _response;
             }
         }
-        
 
         public async Task<APIResponse> GetStatsPartidos(int idEquipo, int? idTemporada)
         {
-            Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
-
-            if (!(bool)existencia["Success"])
+            try
             {
-                _response.IsSuccess = false;
-                _response.statusCode = HttpStatusCode.BadRequest;
-                _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
+                Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
+
+                if (!(bool)existencia["Success"])
+                {
+                    _response.IsSuccess = false;
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
+                    return _response;
+                }
+
+                List<TopListasDtoStats> result = await (from p in _context.PartidosJugados
+                                                        join j in _context.Jugadors on p.IdJugador equals j.Id
+                                                        where p.IdEquipo == idEquipo &&
+                                                              (!idTemporada.HasValue || p.IdTemporada == idTemporada)
+                                                        group p by new { j.Id, j.Nombre } into grouped
+                                                        select new TopListasDtoStats
+                                                        {
+                                                            Id = grouped.Key.Id,
+                                                            Nombre = grouped.Key.Nombre,
+                                                            Cantidad = grouped.Count()
+                                                        })
+                              .OrderByDescending(x => x.Cantidad)
+                              .ToListAsync();
+
+                _response.Result = result;
+                _response.statusCode = HttpStatusCode.OK;
+
                 return _response;
             }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.InternalServerError;
+                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
+                return _response;
 
-            List<TopListasDtoStats> result = await (from p in _context.PartidosJugados
-                                                    join j in _context.Jugadors on p.IdJugador equals j.Id
-                                                    where p.IdEquipo == idEquipo &&
-                                                          (!idTemporada.HasValue || p.IdTemporada == idTemporada)
-                                                    group p by new { j.Id, j.Nombre } into grouped
-                                                    select new TopListasDtoStats
-                                                    {
-                                                        Id = grouped.Key.Id,
-                                                        Nombre = grouped.Key.Nombre,
-                                                        Cantidad = grouped.Count()
-                                                    })
-                          .OrderByDescending(x => x.Cantidad)
-                          .ToListAsync();
-
-            _response.Result = result;
-            _response.statusCode = HttpStatusCode.OK;
-
-            return _response;
+            }
         }
 
         public async Task<APIResponse> GetStatsAmarillas(int idEquipo, int? idTemporada)
         {
-            Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
 
-            if (!(bool)existencia["Success"])
+            try
             {
-                _response.IsSuccess = false;
-                _response.statusCode = HttpStatusCode.BadRequest;
-                _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
+                Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
+
+                if (!(bool)existencia["Success"])
+                {
+                    _response.IsSuccess = false;
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
+                    return _response;
+                }
+
+                List<TopListasDtoStats> result = await (from t in _context.Tarjeta
+                                                        join j in _context.Jugadors on t.IdJugador equals j.Id
+                                                        where t.IdEquipo == idEquipo
+                                                        && t.IdTipoTarjeta == (int)TipoTarjeta.Amarilla
+                                                        && (!idTemporada.HasValue || t.IdTemporada == idTemporada)
+                                                        group t by new { j.Id, j.Nombre } into grouped
+                                                        select new TopListasDtoStats
+                                                        {
+                                                            Id = grouped.Key.Id,
+                                                            Nombre = grouped.Key.Nombre,
+                                                            Cantidad = grouped.Count()
+                                                        })
+                             .OrderByDescending(x => x.Cantidad)
+                             .ToListAsync();
+
+                _response.Result = result;
+                _response.statusCode = HttpStatusCode.OK;
+
                 return _response;
             }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.InternalServerError;
+                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
+                return _response;
 
-            List<TopListasDtoStats> result = await (from t in _context.Tarjeta
-                                                    join j in _context.Jugadors on t.IdJugador equals j.Id
-                                                    where t.IdEquipo == idEquipo 
-                                                    && t.IdTipoTarjeta == (int)TipoTarjeta.Amarilla 
-                                                    && (!idTemporada.HasValue || t.IdTemporada == idTemporada)
-                                                    group t by new { j.Id, j.Nombre } into grouped
-                                                    select new TopListasDtoStats
-                                                    {
-                                                        Id = grouped.Key.Id,
-                                                        Nombre = grouped.Key.Nombre,
-                                                        Cantidad = grouped.Count()
-                                                    })
+            }
+        }
+
+        public async Task<APIResponse> GetStatsRojas(int idEquipo, int? idTemporada)
+        {
+            try
+            {
+                Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
+
+                if (!(bool)existencia["Success"])
+                {
+                    _response.IsSuccess = false;
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
+                    return _response;
+                }
+
+                List<TopListasDtoStats> result = await (from t in _context.Tarjeta
+                                                        join j in _context.Jugadors on t.IdJugador equals j.Id
+                                                        where t.IdEquipo == idEquipo
+                                                        && t.IdTipoTarjeta == (int)TipoTarjeta.Roja
+                                                        && (!idTemporada.HasValue || t.IdTemporada == idTemporada)
+                                                        group t by new { j.Id, j.Nombre } into grouped
+                                                        select new TopListasDtoStats
+                                                        {
+                                                            Id = grouped.Key.Id,
+                                                            Nombre = grouped.Key.Nombre,
+                                                            Cantidad = grouped.Count()
+                                                        })
                          .OrderByDescending(x => x.Cantidad)
                          .ToListAsync();
 
-            _response.Result = result;
-            _response.statusCode = HttpStatusCode.OK;
+                _response.Result = result;
+                _response.statusCode = HttpStatusCode.OK;
 
-            return _response;
-        }
-
-        public async  Task<APIResponse> GetStatsRojas(int idEquipo, int? idTemporada)
-        {
-            Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
-
-            if (!(bool)existencia["Success"])
-            {
-                _response.IsSuccess = false;
-                _response.statusCode = HttpStatusCode.BadRequest;
-                _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
                 return _response;
             }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.InternalServerError;
+                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
+                return _response;
 
-            List<TopListasDtoStats> result = await (from t in _context.Tarjeta
-                                                    join j in _context.Jugadors on t.IdJugador equals j.Id
-                                                    where t.IdEquipo == idEquipo
-                                                    && t.IdTipoTarjeta == (int)TipoTarjeta.Roja
-                                                    && (!idTemporada.HasValue || t.IdTemporada == idTemporada)
-                                                    group t by new { j.Id, j.Nombre } into grouped
-                                                    select new TopListasDtoStats
-                                                    {
-                                                        Id = grouped.Key.Id,
-                                                        Nombre = grouped.Key.Nombre,
-                                                        Cantidad = grouped.Count()
-                                                    })
-                     .OrderByDescending(x => x.Cantidad)
-                     .ToListAsync();
-
-            _response.Result = result;
-            _response.statusCode = HttpStatusCode.OK;
-
-            return _response;
+            }
         }
 
         public enum TipoTarjeta

@@ -22,19 +22,28 @@ namespace API_FutbolStats.Controllers
         }
 
         [HttpGet]
-        [Route("Partidos")]
-        public async Task<IActionResult> Partidos()
+        [Route("Partidos{idTemporada}")]
+        public async Task<IActionResult> Partidos(int idTemporada)
         {
-            APIResponse response = await _service.GetPartidos();
+            APIResponse response = await _service.GetPartidos(idTemporada);
 
             return Ok(response);
         }
 
+        //[HttpGet]
+        //[Route("Partido/{id}")]
+        //public async Task<IActionResult> Partido(int id)
+        //{
+        //    APIResponse response = await _service.GetPartidoById(id);
+
+        //    return Ok(response);
+        //}
+
         [HttpGet]
-        [Route("Partido/{id}")]
-        public async Task<IActionResult> Partido(int id)
+        [Route("PartidoStats/{id}")]
+        public async Task<IActionResult> PartidoStats(int id)
         {
-            APIResponse response = await _service.GetPartidoById(id);
+            APIResponse response = await _service.GetDatosPartido(id);
 
             return Ok(response);
         }

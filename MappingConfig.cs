@@ -31,6 +31,12 @@ namespace API_FutbolStats
             CreateMap<Partido, PartidoDtoCreate>().ReverseMap();
             CreateMap<Partido, PartidoDtoUpdate>().ReverseMap();
 
+            //PartidoJugado
+            CreateMap<PartidosJugado, PartidoJugadoDto>().ReverseMap();
+            CreateMap<PartidosJugado, PartidoJugadoDtoCreate>().ReverseMap();
+            CreateMap<PartidosJugado, PartidoJugadoDtoUpdate>().ReverseMap();
+
+
             //Goles 
             CreateMap<Gole, GolesDto>().ReverseMap();
             CreateMap<Gole, GolesDtoCreate>().ReverseMap();

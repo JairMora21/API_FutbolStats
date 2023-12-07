@@ -4,9 +4,9 @@
     {
         public int Id { get; set; }
 
-        public int IdPosicion { get; set; }
+        public string Posicion { get; set; }
 
-        public int IdEquipo { get; set; }
+        public string Equipo { get; set; }
 
         public string Nombre { get; set; } = null!;
 

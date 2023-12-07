@@ -1,6 +1,7 @@
 ﻿using API_FutbolStats.Models;
 using API_FutbolStats.Models.Dto;
 using API_FutbolStats.Models.DtoCreate;
+using API_FutbolStats.Models.DtoStats;
 using API_FutbolStats.Models.DtoUpdate;
 using API_FutbolStats.Service.Interfaz;
 using AutoMapper;
@@ -57,22 +58,26 @@ namespace API_FutbolStats.Service.Implementacion
         {
             try
             {
-                IEnumerable<PartidosJugado> jugado = await _context.PartidosJugados
-                    .Where(x => x.IdPartido == idPartido)
-                    .ToListAsync();
+                var partido = await _context.Partidos.AnyAsync(x => x.Id == idPartido);
 
-                if (jugado == null)
+                if (!partido)
                 {
-                    _response.ErrorMessages = new List<string> { "No se encontraron los partidos" };
+                    _response.ErrorMessages = new List<string> { "No se encontro el partido" };
                     _response.IsSuccess = false;
                     _response.statusCode = HttpStatusCode.NotFound;
                     return _response;
                 }
-                List<PartidoJugadoDto> jugadoDto = jugado
-                    .Select(x => _mapper.Map<PartidoJugadoDto>(x))
-                    .ToList();
 
-                _response.Result = jugadoDto;
+                List<PartidoJugadoDtoStats> result = await (from g in _context.PartidosJugados
+                                                      join j in _context.Jugadors on g.IdJugador equals j.Id
+                                                      where g.IdPartido == 1
+                                                      group j by j.Nombre into grouped
+                                                      select new PartidoJugadoDtoStats
+                                                      {
+                                                          Nombre = grouped.Key,
+                                                      })
+                                                       .ToListAsync();
+                _response.Result = result;
                 _response.IsSuccess = true;
                 _response.statusCode = HttpStatusCode.OK;
 
@@ -87,41 +92,7 @@ namespace API_FutbolStats.Service.Implementacion
             }
         }
 
-        public async Task<APIResponse> GetPartidosJugadorPorTemporada(int idTemporada, int idJugador)
-        {
-            try
-            {
-                IEnumerable<PartidosJugado> jugado = await _context.PartidosJugados
-                    .Where(x => x.IdTemporada == idTemporada && x.IdJugador == idJugador)
-                    .ToListAsync();
 
-                if (jugado == null)
-                {
-                    _response.ErrorMessages = new List<string> { "No se encontraron las temporadas" };
-                    _response.IsSuccess = false;
-                    _response.statusCode = HttpStatusCode.NotFound;
-                    return _response;
-                }
-                List<PartidoJugadoDto> jugadoDto = jugado
-                    .Select(x => _mapper.Map<PartidoJugadoDto>(x))
-                    .ToList();
-
-
-
-                _response.Result = jugadoDto;
-                _response.IsSuccess = true;
-                _response.statusCode = HttpStatusCode.OK;
-
-                return _response;
-            }
-            catch (Exception ex)
-            {
-                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
-                _response.IsSuccess = false;
-                _response.statusCode = HttpStatusCode.InternalServerError;
-                return _response;
-            }
-        }
 
         public async Task<APIResponse> AddPartidoJugador(PartidoJugadoDtoCreate partidoDto)
         {
@@ -151,7 +122,7 @@ namespace API_FutbolStats.Service.Implementacion
         {
             try
             {
-                PartidosJugado jugado= await _context.PartidosJugados.FindAsync(id);
+                PartidosJugado jugado = await _context.PartidosJugados.FindAsync(id);
 
                 if (id <= 0 || jugado == null)
                 {
@@ -179,7 +150,7 @@ namespace API_FutbolStats.Service.Implementacion
             }
         }
 
-        public  async Task<APIResponse> UpdatePartidoJugador(PartidoJugadoDtoUpdate partidoDto, int id)
+        public async Task<APIResponse> UpdatePartidoJugador(PartidoJugadoDtoUpdate partidoDto, int id)
         {
             try
             {

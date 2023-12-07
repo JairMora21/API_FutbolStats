@@ -1,11 +1,13 @@
 ﻿using API_FutbolStats.Models;
 using API_FutbolStats.Models.Dto;
 using API_FutbolStats.Models.DtoCreate;
+using API_FutbolStats.Models.DtoStats;
 using API_FutbolStats.Models.DtoUpdate;
 using API_FutbolStats.Service.Interfaz;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using static API_FutbolStats.Service.Implementacion.EquipoService;
 
 namespace API_FutbolStats.Service.Implementacion
 {
@@ -53,60 +55,33 @@ namespace API_FutbolStats.Service.Implementacion
         }
    
 
-        public async Task<APIResponse> GetGolesJugadorPorTemporada(int idTemporada, int idJugador)
-        {
-            try
-            {
-                IEnumerable<Gole> goles = await _context.Goles.Where(x => x.IdTemporada == idTemporada && x.IdJugador == idJugador)
-                    .ToListAsync();
-
-                if (goles == null)
-                {
-                    _response.ErrorMessages = new List<string> { "No se encontraron las temporadas" };
-                    _response.IsSuccess = false;
-                    _response.statusCode = HttpStatusCode.NotFound;
-                    return _response;
-                }
-                List<GolesDto> golesDto = goles
-                    .Select(x => _mapper.Map<GolesDto>(x))
-                    .ToList();
-
-
-
-                _response.Result = golesDto;
-                _response.IsSuccess = true;
-                _response.statusCode = HttpStatusCode.OK;
-
-                return _response;
-            }
-            catch (Exception ex)
-            {
-                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
-                _response.IsSuccess = false;
-                _response.statusCode = HttpStatusCode.InternalServerError;
-                return _response;
-            }
-        }
-
         public async Task<APIResponse> GetGolesPartido(int idPartido)
         {
             try
             {
-                IEnumerable<Gole> goles = await _context.Goles.Where(x => x.IdPartido == idPartido)
-                    .ToListAsync();
+                var partido = await _context.Partidos.AnyAsync(x => x.Id == idPartido);
 
-                if (goles == null)
+                if (!partido)
                 {
-                    _response.ErrorMessages = new List<string> { "No se encontraron las temporadas" };
+                    _response.ErrorMessages = new List<string> { "No se encontro el partido" };
                     _response.IsSuccess = false;
                     _response.statusCode = HttpStatusCode.NotFound;
                     return _response;
                 }
-                List<GolesDto> golesDto = goles
-                    .Select(x => _mapper.Map<GolesDto>(x))
-                    .ToList();
+                List<GolPartidoDtoStats> result = await (from g in _context.Goles
+                                                        join j in _context.Jugadors on g.IdJugador equals j.Id
+                                                        where g.IdPartido == idPartido
+                                                        group g by new { j.Id, j.Nombre } into grouped
+                                                        select new GolPartidoDtoStats
+                                                        {
+                                                            Nombre = grouped.Key.Nombre,
+                                                            Cantidad = grouped.Count()
+                                                        })
+                         .OrderByDescending(x => x.Cantidad)
+                         .ToListAsync();
 
-                _response.Result = golesDto;
+
+                _response.Result = result;
                 _response.IsSuccess = true;
                 _response.statusCode = HttpStatusCode.OK;
 

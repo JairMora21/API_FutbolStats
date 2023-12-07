@@ -1,6 +1,7 @@
 ﻿using API_FutbolStats.Models;
 using API_FutbolStats.Models.Dto;
 using API_FutbolStats.Models.DtoCreate;
+using API_FutbolStats.Models.DtoStats;
 using API_FutbolStats.Models.DtoUpdate;
 using API_FutbolStats.Service.Interfaz;
 using AutoMapper;
@@ -53,27 +54,44 @@ namespace API_FutbolStats.Service.Implementacion
             }
         }
 
-        public async Task<APIResponse> GetPartidos()
+        public async Task<APIResponse> GetPartidos(int idTemporada)
         {
             try
             {
-                IEnumerable<Partido> partido = await _context.Partidos.ToListAsync();
+                var existeTemporada = await _context.Temporada.AnyAsync(x => x.Id == idTemporada);
 
-                if (partido == null)
+                if (!existeTemporada)
                 {
-                    _response.ErrorMessages = new List<string> { "No se encontraron los partidos" };
                     _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string> { "No se encontró la temporada a actualizar" };
                     _response.statusCode = HttpStatusCode.NotFound;
                     return _response;
                 }
-                List<PartidoDto> partidoDtos = partido
-                    .Select(p => _mapper.Map<PartidoDto>(p))
-                    .ToList();
+                List<PartidoDtoStats> partidos = await (from p in _context.Partidos
+                                                        join e in _context.Equipos on p.IdEquipo equals e.Id
+                                                        join tp in _context.TipoPartidos on p.IdTipoPartido equals tp.Id
+                                                        join rp in _context.ResultadoPartidos on p.IdResultado equals rp.Id
+                                                        join t in _context.Temporada on p.IdTemporada equals t.Id
+                                                        where p.IdTemporada == idTemporada
+                                                        orderby p.Id
+                                                        select new PartidoDtoStats
+                                                        {
+                                                            Id = p.Id,
+                                                            Equipo = e.Nombre,
+                                                            NombreRival = p.NombreRival,
+                                                            TipoPartido = tp.TipoPartido1,
+                                                            Resultado = rp.Resultado,
+                                                            Temporada = t.NombreTemporada,
+                                                            Fecha = p.Fecha,
+                                                            GolesFavor = p.GolesFavor,
+                                                            GolesContra = p.GolesContra
+                                                        })
+                                       .ToListAsync();
 
-                _response.Result = partidoDtos;
-                _response.IsSuccess = true;
+         
+
+                _response.Result = partidos;
                 _response.statusCode = HttpStatusCode.OK;
-
                 return _response;
             }
             catch (Exception ex)
@@ -173,6 +191,45 @@ namespace API_FutbolStats.Service.Implementacion
 
                 return _response;
             }
+        }
+
+        public async Task<APIResponse> GetDatosPartido(int id)
+        {
+            var existePartido = await _context.Partidos.AnyAsync(x => x.Id == id);
+
+            if (!existePartido)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string> { "No se encontró la temporada a actualizar" };
+                _response.statusCode = HttpStatusCode.NotFound;
+                return _response;
+            }
+
+            PartidoDtoStats partido = await (from p in _context.Partidos
+                                        join e in _context.Equipos on p.IdEquipo equals e.Id
+                                        join tp in _context.TipoPartidos on p.IdTipoPartido equals tp.Id
+                                        join rp in _context.ResultadoPartidos on p.IdResultado equals rp.Id
+                                        join t in _context.Temporada on p.IdTemporada equals t.Id
+                                        where p.Id == 1
+                                        select new PartidoDtoStats
+                                        {
+                                            Id = p.Id,
+                                            Equipo = e.Nombre,
+                                            NombreRival = p.NombreRival,
+                                            TipoPartido = tp.TipoPartido1,
+                                            Resultado = rp.Resultado,
+                                            Temporada = t.NombreTemporada,
+                                            Fecha = p.Fecha,
+                                            GolesFavor = p.GolesFavor,
+                                            GolesContra = p.GolesContra
+                                        })
+             .FirstOrDefaultAsync();
+
+            _response.Result = partido;
+            _response.statusCode = HttpStatusCode.OK;
+
+            return _response;
+
         }
     }
 }
