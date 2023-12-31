@@ -24,6 +24,26 @@ namespace API_FutbolStats.Controllers
         //Tambien estaran los Endpoints de estadisticas
 
         [HttpGet]
+        [Route("Equipos")]
+        public async Task<IActionResult> Equipos()
+        {
+
+            APIResponse response = await _service.GetJugadores();
+
+            return Ok(response);
+        }
+
+        [HttpGet]
+        [Route("Equipo/{id}")]
+        public async Task<IActionResult> Equipo(int id)
+        {
+
+            APIResponse response = await _service.GetJugadores();
+
+            return Ok(response);
+        }
+
+        [HttpGet]
         [Route("Jugadores")]
         public async Task<IActionResult> Jugadores()
         {

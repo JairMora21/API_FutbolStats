@@ -7,6 +7,8 @@ namespace API_FutbolStats.Service.Interfaz
     public interface IEquipoService
     {
         //Crud basico
+        Task<APIResponse> GetEquipos();
+        Task<APIResponse> GetEquipoById(int id);
         Task<APIResponse> GetJugadores();
         Task<APIResponse> GetJugadorById(int id);
         Task<APIResponse> AddJugador(JugadorDtoCreate jugadorDto);
