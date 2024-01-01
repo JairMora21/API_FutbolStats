@@ -28,7 +28,7 @@ namespace API_FutbolStats.Controllers
         public async Task<IActionResult> Equipos()
         {
 
-            APIResponse response = await _service.GetJugadores();
+            APIResponse response = await _service.GetEquipos();
 
             return Ok(response);
         }
@@ -38,7 +38,7 @@ namespace API_FutbolStats.Controllers
         public async Task<IActionResult> Equipo(int id)
         {
 
-            APIResponse response = await _service.GetJugadores();
+            APIResponse response = await _service.GetEquipoById(id);
 
             return Ok(response);
         }
@@ -124,9 +124,9 @@ namespace API_FutbolStats.Controllers
         //Nos dara la lista de top goleadores del equipo
         [HttpGet]
         [Route("TopGoleadores/{idEquipo}")]
-        public async Task<IActionResult> TopGoleadores(int idEquipo, int? idTemporada = null)
+        public async Task<IActionResult> TopGoleadores(int idEquipo, int? idTemporada = null, int? limite = null)
         {
-            APIResponse response = await _service.GetStatsGoleador(idEquipo, idTemporada);
+            APIResponse response = await _service.GetStatsGoleador(idEquipo, idTemporada, limite);
 
             return Ok(response);
         }
@@ -134,9 +134,9 @@ namespace API_FutbolStats.Controllers
         //Nos dara la lista de top que tenga mas partidos con el equipo
         [HttpGet]
         [Route("TopPartidos/{idEquipo}")]
-        public async Task<IActionResult> TopPartidos(int idEquipo, int? idTemporada = null)
+        public async Task<IActionResult> TopPartidos(int idEquipo, int? idTemporada = null, int? limite = null)
         {
-            APIResponse response = await _service.GetStatsPartidos(idEquipo, idTemporada);
+            APIResponse response = await _service.GetStatsPartidos(idEquipo, idTemporada, limite);
 
             return Ok(response);
         }
@@ -156,6 +156,15 @@ namespace API_FutbolStats.Controllers
         public async Task<IActionResult> TopRojas(int idEquipo, int? idTemporada = null)
         {
             APIResponse response = await _service.GetStatsRojas(idEquipo, idTemporada);
+
+            return Ok(response);
+        }
+
+        [HttpGet]
+        [Route("TopTarjetas/{idEquipo}")]
+        public async Task<IActionResult> TopTarjetas(int idEquipo, int? idTemporada = null, int? limite = null)
+        {
+            APIResponse response = await _service.GetStatsTarjetas(idEquipo, idTemporada, limite);
 
             return Ok(response);
         }

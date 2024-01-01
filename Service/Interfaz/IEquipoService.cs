@@ -18,10 +18,12 @@ namespace API_FutbolStats.Service.Interfaz
         //Obtener datos
         Task<APIResponse> GetStatsJugador(int id, int idTemporada);
         Task<APIResponse> GetStatsEquipo(int idEquipo, int? idTemporada);
-        Task<APIResponse> GetStatsGoleador(int idEquipo, int? idTemporada);
-        Task<APIResponse> GetStatsPartidos(int idEquipo, int? idTemporada);
+        Task<APIResponse> GetStatsGoleador(int idEquipo, int? idTemporada, int? limite);
+        Task<APIResponse> GetStatsPartidos(int idEquipo, int? idTemporada, int? limite);
         Task<APIResponse> GetStatsAmarillas(int idEquipo, int? idTemporada);
         Task<APIResponse> GetStatsRojas(int idEquipo, int? idTemporada);
+        Task<APIResponse> GetStatsTarjetas(int idEquipo, int? idTemporada, int? limite);
+
 
 
 

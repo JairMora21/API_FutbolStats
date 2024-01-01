@@ -9,6 +9,10 @@ public partial class Equipo
 
     public string Nombre { get; set; } = null!;
 
+    public string? Lugar { get; set; }
+
+    public string? Escudo { get; set; }
+
     public virtual ICollection<Gole> Goles { get; set; } = new List<Gole>();
 
     public virtual ICollection<Jugador> Jugadors { get; set; } = new List<Jugador>();

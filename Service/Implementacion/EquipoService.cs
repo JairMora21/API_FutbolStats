@@ -25,6 +25,86 @@ namespace API_FutbolStats.Service.Implementacion
             _response = new APIResponse();
         }
 
+        public async Task<APIResponse> GetEquipos()
+        {
+            try
+            {
+                List<EquipoDto> equipos = await _context.Equipos
+                 .Select(e => new EquipoDto
+                 {
+                     Id = e.Id,
+                     Nombre = e.Nombre,
+                     Lugar = e.Lugar,
+                     Escudo = e.Escudo
+                 })
+                 .ToListAsync();
+
+                if (equipos == null)
+                {
+                    _response.statusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    return _response;
+                }
+
+                _response.Result = equipos;
+                _response.IsSuccess = true;
+                _response.statusCode = HttpStatusCode.OK;
+
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.InternalServerError;
+                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
+
+                return _response;
+            }
+        }
+
+        public async Task<APIResponse> GetEquipoById(int id)
+        {
+            try
+            {
+                var existeEquipo = await _context.Equipos.AnyAsync(x => x.Id == id);
+
+                if (!existeEquipo)
+                {
+                    _response.statusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    return _response;
+                }
+
+                EquipoDto equipo = await _context.Equipos
+                     .Where(j => j.Id == id)
+                     .Select(p => new EquipoDto
+                     {
+                         Id = p.Id,
+                         Nombre = p.Nombre,
+                         Lugar = p.Lugar,
+                         Escudo = p.Escudo
+
+                     })
+                      .FirstOrDefaultAsync();
+
+
+                _response.Result = equipo;
+                _response.IsSuccess = true;
+                _response.statusCode = HttpStatusCode.OK;
+
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                // Manejar la excepción de manera específica, registrarla, etc.
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.InternalServerError;
+                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
+
+                return _response;
+            }
+        }
+
         public async Task<APIResponse> GetJugadores()
         {
             try
@@ -414,7 +494,7 @@ namespace API_FutbolStats.Service.Implementacion
 
         }
 
-        public async Task<APIResponse> GetStatsGoleador(int idEquipo, int? idTemporada)
+        public async Task<APIResponse> GetStatsGoleador(int idEquipo, int? idTemporada, int? limite)
         {
             try
             {
@@ -428,19 +508,28 @@ namespace API_FutbolStats.Service.Implementacion
                     return _response;
                 }
 
-                List<TopListasDtoStats> result = await (from g in _context.Goles
-                                                        join j in _context.Jugadors on g.IdJugador equals j.Id
-                                                        where g.IdEquipo == idEquipo &&
-                                                              (!idTemporada.HasValue || g.IdTemporada == idTemporada)
-                                                        group g by new { j.Id, j.Nombre } into grouped
-                                                        select new TopListasDtoStats
-                                                        {
-                                                            Id = grouped.Key.Id,
-                                                            Nombre = grouped.Key.Nombre,
-                                                            Cantidad = grouped.Count()
-                                                        })
-                          .OrderByDescending(x => x.Cantidad)
-                          .ToListAsync();
+                //Se ejecuta el query para obtener el top de goleadores
+                IQueryable<TopListasDtoStats> query =
+           from g in _context.Goles
+           join j in _context.Jugadors on g.IdJugador equals j.Id
+           where g.IdEquipo == idEquipo &&
+                 (!idTemporada.HasValue || g.IdTemporada == idTemporada)
+           group g by new { j.Id, j.Nombre } into grouped
+           select new TopListasDtoStats
+           {
+               Id = grouped.Key.Id,
+               Nombre = grouped.Key.Nombre,
+               Cantidad = grouped.Count()
+           };
+                //ordenamos de mayor goles a menor 
+                query = query.OrderByDescending(x => x.Cantidad);
+                //Si se selecciono un limite se debe recortan los registros correponsiente al limite 
+                if (limite.HasValue)
+                {
+                    query = query.Take(limite.Value);
+                }
+                //Traemos la lista de goleadores
+                List<TopListasDtoStats> result = await query.ToListAsync();
 
                 _response.Result = result;
                 _response.statusCode = HttpStatusCode.OK;
@@ -457,7 +546,7 @@ namespace API_FutbolStats.Service.Implementacion
             }
         }
 
-        public async Task<APIResponse> GetStatsPartidos(int idEquipo, int? idTemporada)
+        public async Task<APIResponse> GetStatsPartidos(int idEquipo, int? idTemporada, int? limite)
         {
             try
             {
@@ -471,19 +560,29 @@ namespace API_FutbolStats.Service.Implementacion
                     return _response;
                 }
 
-                List<TopListasDtoStats> result = await (from p in _context.PartidosJugados
-                                                        join j in _context.Jugadors on p.IdJugador equals j.Id
-                                                        where p.IdEquipo == idEquipo &&
-                                                              (!idTemporada.HasValue || p.IdTemporada == idTemporada)
-                                                        group p by new { j.Id, j.Nombre } into grouped
-                                                        select new TopListasDtoStats
-                                                        {
-                                                            Id = grouped.Key.Id,
-                                                            Nombre = grouped.Key.Nombre,
-                                                            Cantidad = grouped.Count()
-                                                        })
-                              .OrderByDescending(x => x.Cantidad)
-                              .ToListAsync();
+                //Se ejecuta el query para obtener el top de goleadores
+                IQueryable<TopListasDtoStats> query =
+      from p in _context.PartidosJugados
+      join j in _context.Jugadors on p.IdJugador equals j.Id
+      where p.IdEquipo == idEquipo &&
+            (!idTemporada.HasValue || p.IdTemporada == idTemporada)
+      group p by new { j.Id, j.Nombre } into grouped
+      select new TopListasDtoStats
+      {
+          Id = grouped.Key.Id,
+          Nombre = grouped.Key.Nombre,
+          Cantidad = grouped.Count()
+      };
+                //ordenamos de mayor partidos jugados a menor 
+                query = query.OrderByDescending(x => x.Cantidad);
+
+                //Si se selecciono un limite se debe recortan los registros correponsiente al limite 
+                if (limite.HasValue)
+                {
+                    query = query.Take(limite.Value);
+                }
+                //Creamos la lista 
+                List<TopListasDtoStats> result = await query.ToListAsync();
 
                 _response.Result = result;
                 _response.statusCode = HttpStatusCode.OK;
@@ -573,6 +672,65 @@ namespace API_FutbolStats.Service.Implementacion
                                                         })
                          .OrderByDescending(x => x.Cantidad)
                          .ToListAsync();
+
+                _response.Result = result;
+                _response.statusCode = HttpStatusCode.OK;
+
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.InternalServerError;
+                _response.ErrorMessages = new List<string> { $"Error: {ex.Message}" };
+                return _response;
+
+            }
+        }
+
+        public async Task<APIResponse> GetStatsTarjetas(int idEquipo, int? idTemporada, int? limite)
+        {
+            try
+            {
+                Dictionary<string, object> existencia = await ValidarExistencia(idEquipo, idTemporada);
+
+                if (!(bool)existencia["Success"])
+                {
+                    _response.IsSuccess = false;
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    _response.ErrorMessages = new List<string> { $"Error: {existencia["Message"]}" };
+                    return _response;
+                }
+
+                IQueryable<TopTarjetasDtoStats> query = (from t in _context.Tarjeta
+                                                         join j in _context.Jugadors on t.IdJugador equals j.Id
+                                                         where t.IdEquipo == idEquipo &&
+                                                               (!idTemporada.HasValue || t.IdTemporada == idTemporada)
+                                                         group t by new { j.Id, j.Nombre } into grouped
+                                                         select new TopTarjetasDtoStats
+                                                         {
+                                                             Id = grouped.Key.Id,
+                                                             Nombre = grouped.Key.Nombre,
+                                                             Amarillas = grouped.Count(x => x.IdTipoTarjeta == 2),
+                                                             Rojas = grouped.Count(x => x.IdTipoTarjeta == 1),
+                                                             Total = grouped.Count(x => x.IdTipoTarjeta == 1 || x.IdTipoTarjeta == 2)
+
+                                                         });
+
+
+                query = query.OrderByDescending(x => x.Total);
+
+                //Si se selecciono un limite se debe recortan los registros correponsiente al limite 
+                if (limite.HasValue)
+                {
+                    query = query.Take(limite.Value);
+                }
+                //Creamos la lista 
+                List<TopTarjetasDtoStats> result = await query.ToListAsync();
+
+                _response.Result = result;
+                _response.statusCode = HttpStatusCode.OK;
+
 
                 _response.Result = result;
                 _response.statusCode = HttpStatusCode.OK;

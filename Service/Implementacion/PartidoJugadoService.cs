@@ -70,7 +70,7 @@ namespace API_FutbolStats.Service.Implementacion
 
                 List<PartidoJugadoDtoStats> result = await (from g in _context.PartidosJugados
                                                       join j in _context.Jugadors on g.IdJugador equals j.Id
-                                                      where g.IdPartido == 1
+                                                      where g.IdPartido == idPartido
                                                       group j by j.Nombre into grouped
                                                       select new PartidoJugadoDtoStats
                                                       {
