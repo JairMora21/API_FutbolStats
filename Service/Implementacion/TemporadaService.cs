@@ -71,13 +71,23 @@ namespace API_FutbolStats.Service.Implementacion
             }
         }
 
-        public async Task<APIResponse> GetTemporadas()
+        public async Task<APIResponse> GetTemporadas(int idEquipo)
         {
             try
             {
+                var existeEquipo = await _context.Equipos.AnyAsync(x => x.Id == idEquipo);
+
+                if (!existeEquipo)
+                {
+                    _response.ErrorMessages = new List<string> { "No se encontró la temporada" };
+                    _response.IsSuccess = false;
+                    _response.statusCode = HttpStatusCode.NotFound;
+                    return _response;
+                }
                 IEnumerable<TemporadaDto> temporadas = await _context.Temporada
                     .Include(x => x.IdClasificacionNavigation)
                     .Include(x => x.IdEquipoNavigation)
+                    .Where(x => x.IdEquipoNavigation.Id == idEquipo)
                     .Select(x => new TemporadaDto
                     {
                         Id = x.Id,

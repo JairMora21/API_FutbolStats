@@ -7,7 +7,7 @@ namespace API_FutbolStats.Service.Interfaz
     public interface ITemporadaService
     {
 
-        Task<APIResponse> GetTemporadas();
+        Task<APIResponse> GetTemporadas(int idEquipo);
         Task<APIResponse> GetTemporadaById(int id);
         Task<APIResponse> AddTemporada(TemporadaDtoCreate temporadaDto);
         Task<APIResponse> DeleteTemporada(int id);

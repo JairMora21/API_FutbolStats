@@ -11,6 +11,9 @@
         public int PartidosGanados { get; set; }
         public int PartidosEmpatados { get; set; }
         public int PartidosPerdidos { get; set; }
+        public int Puntos { get; set; }
+
+
 
     }
 }

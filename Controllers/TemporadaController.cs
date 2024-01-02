@@ -21,10 +21,10 @@ namespace API_FutbolStats.Controllers
         }
 
         [HttpGet]
-        [Route("Temporadas")]
-        public async Task<IActionResult> Temporadas()
+        [Route("Temporadas/{idEquipo}")]
+        public async Task<IActionResult> Temporadas(int idEquipo)
         {
-            APIResponse response = await _service.GetTemporadas();
+            APIResponse response = await _service.GetTemporadas(idEquipo);
 
             return Ok(response);
         }

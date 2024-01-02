@@ -425,7 +425,7 @@ namespace API_FutbolStats.Service.Implementacion
 
         public async Task<APIResponse> GetStatsEquipo(int idEquipo, int? idTemporada)
         {
-            EquipoStats equitoStats = new EquipoStats();
+            EquipoStats equipoStats = new EquipoStats();
 
             try
             {
@@ -465,21 +465,26 @@ namespace API_FutbolStats.Service.Implementacion
 
                 if (statsPartidos != null)
                 {
-                    equitoStats.PartidosJugados = statsPartidos.PartidosJugados;
-                    equitoStats.PartidosGanados = statsPartidos.PartidosGanados;
-                    equitoStats.PartidosEmpatados = statsPartidos.PartidosEmpatado;
-                    equitoStats.PartidosPerdidos = statsPartidos.PartidosPerdido;
-                    equitoStats.GolesAnotados = statsPartidos.GolesFavor;
-                    equitoStats.GolesRecibidos = statsPartidos.GolesContra;
-                    equitoStats.GolesDiferencia = statsPartidos.GolesFavor - statsPartidos.GolesContra;
+                    equipoStats.PartidosJugados = statsPartidos.PartidosJugados;
+                    equipoStats.PartidosGanados = statsPartidos.PartidosGanados;
+                    equipoStats.PartidosEmpatados = statsPartidos.PartidosEmpatado;
+                    equipoStats.PartidosPerdidos = statsPartidos.PartidosPerdido;
+                    equipoStats.GolesAnotados = statsPartidos.GolesFavor;
+                    equipoStats.GolesRecibidos = statsPartidos.GolesContra;
+                    equipoStats.GolesDiferencia = statsPartidos.GolesFavor - statsPartidos.GolesContra;
+                    int puntos = (statsPartidos.PartidosGanados * 3) + (statsPartidos.PartidosEmpatado);
+                    equipoStats.Puntos = puntos;
+
+
                 }
 
                 if (statsTarjetas != null)
                 {
-                    equitoStats.Amarillas = statsTarjetas.Amarillas;
-                    equitoStats.Rojas = statsTarjetas.Rojas;
+                    equipoStats.Amarillas = statsTarjetas.Amarillas;
+                    equipoStats.Rojas = statsTarjetas.Rojas;
                 }
-                _response.Result = equitoStats;
+
+                _response.Result = equipoStats;
                 _response.statusCode = HttpStatusCode.OK;
                 return _response;
 
