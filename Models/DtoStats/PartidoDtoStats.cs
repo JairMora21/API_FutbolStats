@@ -6,6 +6,8 @@
         public int Id { get; set; }
 
         public string Equipo { get; set; }
+        public string EquipoEscudo { get; set; }
+
 
         public string Temporada { get; set; }
 

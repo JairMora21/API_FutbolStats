@@ -54,7 +54,7 @@ namespace API_FutbolStats.Service.Implementacion
                                     })
                                     .FirstOrDefaultAsync();
 
-               
+
                 _response.Result = temporada;
                 _response.statusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
@@ -79,7 +79,7 @@ namespace API_FutbolStats.Service.Implementacion
 
                 if (!existeEquipo)
                 {
-                    _response.ErrorMessages = new List<string> { "No se encontró la temporada" };
+                    _response.ErrorMessages = new List<string> { "No se encontró el equipo" };
                     _response.IsSuccess = false;
                     _response.statusCode = HttpStatusCode.NotFound;
                     return _response;
@@ -88,6 +88,7 @@ namespace API_FutbolStats.Service.Implementacion
                     .Include(x => x.IdClasificacionNavigation)
                     .Include(x => x.IdEquipoNavigation)
                     .Where(x => x.IdEquipoNavigation.Id == idEquipo)
+                    .OrderByDescending(x => x.Id)  // Ordena descendentemente por el campo Id
                     .Select(x => new TemporadaDto
                     {
                         Id = x.Id,
@@ -108,8 +109,62 @@ namespace API_FutbolStats.Service.Implementacion
                     _response.statusCode = HttpStatusCode.NotFound;
                     return _response;
                 }
-                
+
                 _response.Result = temporadas;
+                _response.IsSuccess = true;
+                _response.statusCode = HttpStatusCode.OK;
+
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.ErrorMessages = new List<string> { $"Error:{ex}" };
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
+
+        public async Task<APIResponse> GetUltimaTemporada(int idEquipo)
+        {
+            try
+            {
+                var existeEquipo = await _context.Equipos.AnyAsync(x => x.Id == idEquipo);
+
+                if (!existeEquipo)
+                {
+                    _response.ErrorMessages = new List<string> { "No se encontró el equipo" };
+                    _response.IsSuccess = false;
+                    _response.statusCode = HttpStatusCode.NotFound;
+                    return _response;
+                }
+                TemporadaDto temporada = await _context.Temporada
+                    .Include(x => x.IdClasificacionNavigation)
+                    .Include(x => x.IdEquipoNavigation)
+                    .Where(x => x.IdEquipoNavigation.Id == idEquipo)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => new TemporadaDto
+                    {
+                        Id = x.Id,
+                        Clasificacion = x.IdClasificacionNavigation.Clasificacion,
+                        Equipo = x.IdEquipoNavigation.Nombre,
+                        NoTemporada = x.NoTemporada,
+                        NombreTemporada = x.NombreTemporada,
+                        FechaInicio = x.FechaInicio,
+                        FechaFinal = x.FechaFinal,
+                        Posicion = x.Posicion
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (temporada == null)
+                {
+                    _response.ErrorMessages = new List<string> { "No se encontro la temporada" };
+                    _response.IsSuccess = false;
+                    _response.statusCode = HttpStatusCode.NotFound;
+                    return _response;
+                }
+
+                _response.Result = temporada;
                 _response.IsSuccess = true;
                 _response.statusCode = HttpStatusCode.OK;
 
@@ -223,5 +278,7 @@ namespace API_FutbolStats.Service.Implementacion
         {
             throw new NotImplementedException();
         }
+
+
     }
 }

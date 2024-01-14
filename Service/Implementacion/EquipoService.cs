@@ -72,6 +72,8 @@ namespace API_FutbolStats.Service.Implementacion
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string> { $"Error: no se encontro el equipo" };
+
                     return _response;
                 }
 
@@ -105,13 +107,25 @@ namespace API_FutbolStats.Service.Implementacion
             }
         }
 
-        public async Task<APIResponse> GetJugadores()
+        public async Task<APIResponse> GetJugadores(int idEquipo)
         {
             try
             {
+
+                var existeEquipo = await _context.Equipos.AnyAsync(x => x.Id == idEquipo);
+
+                if (!existeEquipo)
+                {
+                    _response.statusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string> { $"Error: no se encontro el equipo" };
+                    return _response;
+                }
+
                 List<JugadorDto> jugadores = await _context.Jugadors
                     .Include(x => x.IdEquipoNavigation)
                     .Include(x => x.IdPosicionNavigation)
+                    .Where(x => x.IdEquipoNavigation.Id == idEquipo)
                     .Select(p => new JugadorDto
                     {
                         Id = p.Id,
@@ -159,6 +173,7 @@ namespace API_FutbolStats.Service.Implementacion
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string> { $"Error: no se encontro el jugador" };
                     return _response;
                 }
 
@@ -206,6 +221,8 @@ namespace API_FutbolStats.Service.Implementacion
                 {
                     _response.statusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string> { $"Error: no se encontro el jugador" };
+
                     return _response;
                 }
 
@@ -242,6 +259,8 @@ namespace API_FutbolStats.Service.Implementacion
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string> { $"Error: no se encontro el jugador" };
+
                     return _response;
                 }
                 _context.Jugadors.Remove(jugador);
@@ -273,6 +292,8 @@ namespace API_FutbolStats.Service.Implementacion
                 {
                     _response.statusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string> { $"Error: no se encontro el jugador" };
+
                     return _response;
                 }
 
@@ -298,7 +319,7 @@ namespace API_FutbolStats.Service.Implementacion
 
         }
 
-        public async Task<APIResponse> GetStatsJugador(int idJugador, int idTemporada)
+        public async Task<APIResponse> GetStatsJugador(int idJugador, int? idTemporada)
         {
             JugadorDtoStats stats = new JugadorDtoStats();
 
@@ -308,16 +329,27 @@ namespace API_FutbolStats.Service.Implementacion
                 var jugadorExistente = await _context.Jugadors
                     .AnyAsync(j => j.Id == idJugador);
 
-                // Validar si la temporada existe
-                var temporadaExistente = await _context.Temporada
-                    .AnyAsync(t => t.Id == idTemporada);
-
-                if (!jugadorExistente || !temporadaExistente)
+                if (!jugadorExistente)
                 {
                     _response.IsSuccess = false;
                     _response.statusCode = HttpStatusCode.BadRequest;
-                    _response.ErrorMessages = new List<string> { $"Error: no se encontro el jugador o la temporada" };
+                    _response.ErrorMessages = new List<string> { $"Error: no se encontro el jugador" };
                     return _response;
+                }
+
+                if(idTemporada != null)
+                {
+                    // Validar si la temporada existe
+                    var temporadaExistente = await _context.Temporada
+                        .AnyAsync(t => t.Id == idTemporada);
+
+                    if (!temporadaExistente)
+                    {
+                        _response.IsSuccess = false;
+                        _response.statusCode = HttpStatusCode.BadRequest;
+                        _response.ErrorMessages = new List<string> { $"Error: no se encontro la temporada" };
+                        return _response;
+                    }
                 }
 
 
@@ -445,9 +477,9 @@ namespace API_FutbolStats.Service.Implementacion
                    .Select(x => new
                    {
                        PartidosJugados = x.Count(),
-                       PartidosGanados = x.Count(x => x.IdResultado == 1),
-                       PartidosEmpatado = x.Count(x => x.IdResultado == 2),
-                       PartidosPerdido = x.Count(x => x.IdResultado == 3),
+                       PartidosGanados = x.Count(x => x.IdResultado == ((int)ResultadoPartido.Victoria)),
+                       PartidosEmpatado = x.Count(x => x.IdResultado == ((int)ResultadoPartido.Empate)),
+                       PartidosPerdido = x.Count(x => x.IdResultado == ((int)ResultadoPartido.Derrota)),
                        GolesFavor = x.Sum(x => x.GolesFavor),
                        GolesContra = x.Sum(x => x.GolesContra),
                    })
@@ -567,17 +599,17 @@ namespace API_FutbolStats.Service.Implementacion
 
                 //Se ejecuta el query para obtener el top de goleadores
                 IQueryable<TopListasDtoStats> query =
-      from p in _context.PartidosJugados
-      join j in _context.Jugadors on p.IdJugador equals j.Id
-      where p.IdEquipo == idEquipo &&
-            (!idTemporada.HasValue || p.IdTemporada == idTemporada)
-      group p by new { j.Id, j.Nombre } into grouped
-      select new TopListasDtoStats
-      {
-          Id = grouped.Key.Id,
-          Nombre = grouped.Key.Nombre,
-          Cantidad = grouped.Count()
-      };
+                      from p in _context.PartidosJugados
+                      join j in _context.Jugadors on p.IdJugador equals j.Id
+                      where p.IdEquipo == idEquipo &&
+                            (!idTemporada.HasValue || p.IdTemporada == idTemporada)
+                      group p by new { j.Id, j.Nombre } into grouped
+                      select new TopListasDtoStats
+                      {
+                          Id = grouped.Key.Id,
+                          Nombre = grouped.Key.Nombre,
+                          Cantidad = grouped.Count()
+                      };
                 //ordenamos de mayor partidos jugados a menor 
                 query = query.OrderByDescending(x => x.Cantidad);
 
@@ -707,20 +739,20 @@ namespace API_FutbolStats.Service.Implementacion
                     return _response;
                 }
 
+                //Se crea el query para obtener el top tarjetas de los jugadores
                 IQueryable<TopTarjetasDtoStats> query = (from t in _context.Tarjeta
-                                                         join j in _context.Jugadors on t.IdJugador equals j.Id
-                                                         where t.IdEquipo == idEquipo &&
-                                                               (!idTemporada.HasValue || t.IdTemporada == idTemporada)
-                                                         group t by new { j.Id, j.Nombre } into grouped
-                                                         select new TopTarjetasDtoStats
-                                                         {
-                                                             Id = grouped.Key.Id,
-                                                             Nombre = grouped.Key.Nombre,
-                                                             Amarillas = grouped.Count(x => x.IdTipoTarjeta == 2),
-                                                             Rojas = grouped.Count(x => x.IdTipoTarjeta == 1),
-                                                             Total = grouped.Count(x => x.IdTipoTarjeta == 1 || x.IdTipoTarjeta == 2)
-
-                                                         });
+                    join j in _context.Jugadors on t.IdJugador equals j.Id
+                    where t.IdEquipo == idEquipo &&
+                        (!idTemporada.HasValue || t.IdTemporada == idTemporada)
+                    group t by new { j.Id, j.Nombre } into grouped
+                    select new TopTarjetasDtoStats
+                    {
+                        Id = grouped.Key.Id,
+                        Nombre = grouped.Key.Nombre,
+                        Amarillas = grouped.Count(x => x.IdTipoTarjeta == ((int)TipoTarjeta.Amarilla)),
+                        Rojas = grouped.Count(x => x.IdTipoTarjeta == ((int)TipoTarjeta.Roja)),
+                        Total = grouped.Count(x => x.IdTipoTarjeta == ((int)TipoTarjeta.Amarilla) || x.IdTipoTarjeta == ((int)TipoTarjeta.Roja))
+                    });
 
 
                 query = query.OrderByDescending(x => x.Total);
@@ -756,6 +788,13 @@ namespace API_FutbolStats.Service.Implementacion
         {
             Roja = 1,
             Amarilla = 2,
+        }
+
+        public enum ResultadoPartido
+        {
+            Victoria = 1,
+            Derrota = 2,
+            Empate = 3
         }
     }
 }

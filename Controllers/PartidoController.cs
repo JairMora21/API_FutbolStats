@@ -22,7 +22,7 @@ namespace API_FutbolStats.Controllers
         }
 
         [HttpGet]
-        [Route("Partidos{idTemporada}")]
+        [Route("Partidos/{idTemporada}")]
         public async Task<IActionResult> Partidos(int idTemporada)
         {
             APIResponse response = await _service.GetPartidos(idTemporada);

@@ -9,6 +9,8 @@ namespace API_FutbolStats.Service.Interfaz
 
         Task<APIResponse> GetTemporadas(int idEquipo);
         Task<APIResponse> GetTemporadaById(int id);
+        Task<APIResponse> GetUltimaTemporada(int idEquipo);
+
         Task<APIResponse> AddTemporada(TemporadaDtoCreate temporadaDto);
         Task<APIResponse> DeleteTemporada(int id);
         Task<APIResponse> UpdateTemporada(TemporadaDtoUpdate temporadaDto, int id);

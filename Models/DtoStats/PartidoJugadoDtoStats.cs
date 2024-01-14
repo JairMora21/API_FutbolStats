@@ -4,5 +4,7 @@
     {
         public string Nombre { get; set; }
 
+        public string Dorsal { get; set; }
+
     }
 }

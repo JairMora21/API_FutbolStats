@@ -44,11 +44,11 @@ namespace API_FutbolStats.Controllers
         }
 
         [HttpGet]
-        [Route("Jugadores")]
-        public async Task<IActionResult> Jugadores()
+        [Route("Jugadores/{idEquipo}")]
+        public async Task<IActionResult> Jugadores(int idEquipo)
         {
 
-            APIResponse response = await _service.GetJugadores();
+            APIResponse response = await _service.GetJugadores(idEquipo);
 
             return Ok(response);
         }
@@ -101,8 +101,8 @@ namespace API_FutbolStats.Controllers
 
         //Estadisticas individuales de un jugador en especifico
         [HttpGet]
-        [Route("JugadorStats/{idJugador}/{idTemporada}")]
-        public async Task<IActionResult> JugadorStats(int idJugador, int idTemporada)
+        [Route("JugadorStats/{idJugador}")]
+        public async Task<IActionResult> JugadorStats(int idJugador, int? idTemporada = null)
         {
 
             APIResponse response = await _service.GetStatsJugador(idJugador, idTemporada);

@@ -38,6 +38,16 @@ namespace API_FutbolStats.Controllers
             return Ok(response);
         }
 
+
+        [HttpGet]
+        [Route("UltimaTemporada/{idEquipo}")]
+        public async Task<IActionResult> UltimaTemporada(int idEquipo)
+        {
+            APIResponse response = await _service.GetUltimaTemporada(idEquipo);
+
+            return Ok(response);
+        }
+
         [HttpPost]
         [Route("AddTemporada")]
         [Authorize]

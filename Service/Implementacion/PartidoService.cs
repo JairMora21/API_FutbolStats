@@ -78,6 +78,7 @@ namespace API_FutbolStats.Service.Implementacion
                                                         {
                                                             Id = p.Id,
                                                             Equipo = e.Nombre,
+                                                            EquipoEscudo = e.Escudo,
                                                             NombreRival = p.NombreRival,
                                                             TipoPartido = tp.TipoPartido1,
                                                             Resultado = rp.Resultado,
@@ -88,7 +89,7 @@ namespace API_FutbolStats.Service.Implementacion
                                                         })
                                        .ToListAsync();
 
-         
+
 
                 _response.Result = partidos;
                 _response.statusCode = HttpStatusCode.OK;
@@ -195,83 +196,96 @@ namespace API_FutbolStats.Service.Implementacion
 
         public async Task<APIResponse> GetDatosPartido(int id)
         {
-            var existePartido = await _context.Partidos.AnyAsync(x => x.Id == id);
-
-            if (!existePartido)
+            try
             {
-                _response.IsSuccess = false;
-                _response.ErrorMessages = new List<string> { "No se encontró la temporada a actualizar" };
-                _response.statusCode = HttpStatusCode.NotFound;
-                return _response;
-            }
+                var existePartido = await _context.Partidos.AnyAsync(x => x.Id == id);
 
-            PartidoDtoStats partido = await (from p in _context.Partidos
-                                        join e in _context.Equipos on p.IdEquipo equals e.Id
-                                        join tp in _context.TipoPartidos on p.IdTipoPartido equals tp.Id
-                                        join rp in _context.ResultadoPartidos on p.IdResultado equals rp.Id
-                                        join t in _context.Temporada on p.IdTemporada equals t.Id
-                                        where p.Id == id
-                                        select new PartidoDtoStats
-                                        {
-                                            Id = p.Id,
-                                            Equipo = e.Nombre,
-                                            NombreRival = p.NombreRival,
-                                            TipoPartido = tp.TipoPartido1,
-                                            Resultado = rp.Resultado,
-                                            Temporada = t.NombreTemporada,
-                                            Fecha = p.Fecha,
-                                            GolesFavor = p.GolesFavor,
-                                            GolesContra = p.GolesContra
-                                        })
-             .FirstOrDefaultAsync();
+                if (!existePartido)
+                {
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string> { "No se encontró la temporada a actualizar" };
+                    _response.statusCode = HttpStatusCode.NotFound;
+                    return _response;
+                }
 
-            List<GolPartidoDtoStats> Goles = await (from g in _context.Goles
-                                                     join j in _context.Jugadors on g.IdJugador equals j.Id
-                                                     where g.IdPartido == id
-                                                     group g by new { j.Id, j.Nombre } into grouped
-                                                     select new GolPartidoDtoStats
-                                                     {
-                                                         Nombre = grouped.Key.Nombre,
-                                                         Cantidad = grouped.Count()
-                                                     })
-                        .OrderByDescending(x => x.Cantidad)
-                        .ToListAsync();
+                PartidoDtoStats partido = await (from p in _context.Partidos
+                                                 join e in _context.Equipos on p.IdEquipo equals e.Id
+                                                 join tp in _context.TipoPartidos on p.IdTipoPartido equals tp.Id
+                                                 join rp in _context.ResultadoPartidos on p.IdResultado equals rp.Id
+                                                 join t in _context.Temporada on p.IdTemporada equals t.Id
+                                                 where p.Id == id
+                                                 select new PartidoDtoStats
+                                                 {
+                                                     Id = p.Id,
+                                                     Equipo = e.Nombre,
+                                                     EquipoEscudo = e.Escudo,
+                                                     NombreRival = p.NombreRival,
+                                                     TipoPartido = tp.TipoPartido1,
+                                                     Resultado = rp.Resultado,
+                                                     Temporada = t.NombreTemporada,
+                                                     Fecha = p.Fecha,
+                                                     GolesFavor = p.GolesFavor,
+                                                     GolesContra = p.GolesContra
+                                                 })
+                 .FirstOrDefaultAsync();
 
-            List<TarjetaPartidoDtoStats> tarjetas = await (from g in _context.Tarjeta
-                                                         join j in _context.Jugadors on g.IdJugador equals j.Id
-                                                         join tt in _context.TipoTarjeta on g.IdTipoTarjeta equals tt.Id
-                                                         where g.IdPartido == id
-                                                         select new TarjetaPartidoDtoStats
-                                                         {
-                                                             Nombre = j.Nombre,
-                                                             Tarjeta = tt.Tarjeta,
-                                                             idTipoTarjeta = tt.Id
-                                                         })
-                                                            .ToListAsync();
-
-            List<PartidoJugadoDtoStats> participaciones = await (from g in _context.PartidosJugados
+                List<GolPartidoDtoStats> Goles = await (from g in _context.Goles
                                                         join j in _context.Jugadors on g.IdJugador equals j.Id
                                                         where g.IdPartido == id
-                                                        group j by j.Nombre into grouped
-                                                        select new PartidoJugadoDtoStats
+                                                        group g by new { j.Id, j.Nombre } into grouped
+                                                        select new GolPartidoDtoStats
                                                         {
-                                                            Nombre = grouped.Key,
+                                                            Nombre = grouped.Key.Nombre,
+                                                            Cantidad = grouped.Count()
                                                         })
-                                                       .ToListAsync();
+                            .OrderByDescending(x => x.Cantidad)
+                            .ToListAsync();
 
-            PartidoCompletoDtoStats result = new PartidoCompletoDtoStats
+                List<TarjetaPartidoDtoStats> tarjetas = await (from g in _context.Tarjeta
+                                                               join j in _context.Jugadors on g.IdJugador equals j.Id
+                                                               join tt in _context.TipoTarjeta on g.IdTipoTarjeta equals tt.Id
+                                                               where g.IdPartido == id
+                                                               select new TarjetaPartidoDtoStats
+                                                               {
+                                                                   Nombre = j.Nombre,
+                                                                   Tarjeta = tt.Tarjeta,
+                                                                   idTipoTarjeta = tt.Id
+                                                               })
+                                                                .ToListAsync();
+
+                List<PartidoJugadoDtoStats> participaciones = await (from g in _context.PartidosJugados
+                                                                     join j in _context.Jugadors on g.IdJugador equals j.Id
+                                                                     where g.IdPartido == id
+                                                                     group j by new { j.Dorsal, j.Nombre } into grouped
+                                                                     select new PartidoJugadoDtoStats
+                                                                     {
+                                                                         Nombre = grouped.Key.Nombre,
+                                                                         Dorsal = grouped.Key.Dorsal
+                                                                     })
+                                                           .ToListAsync();
+
+                PartidoCompletoDtoStats result = new PartidoCompletoDtoStats
+                {
+                    DatosPartido = partido,
+                    Goleadores = Goles,
+                    Tarjetas = tarjetas,
+                    Participantes = participaciones
+                };
+
+
+                _response.Result = result;
+                _response.statusCode = HttpStatusCode.OK;
+
+                return _response;
+
+            }
+            catch (Exception e)
             {
-                DatosPartido = partido,
-                Goleadores = Goles,
-                Tarjetas = tarjetas,
-                Participantes = participaciones
-            };
-
-
-            _response.Result = result;
-            _response.statusCode = HttpStatusCode.OK;
-
-            return _response;
+                _response.ErrorMessages = new List<string> { "Ocurrió un error al procesar la solicitud." };
+                _response.IsSuccess = false;
+                _response.statusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
 
         }
     }
