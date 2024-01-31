@@ -793,8 +793,8 @@ namespace API_FutbolStats.Service.Implementacion
         public enum ResultadoPartido
         {
             Victoria = 1,
-            Derrota = 2,
-            Empate = 3
+            Empate = 2,
+            Derrota = 3,
         }
     }
 }

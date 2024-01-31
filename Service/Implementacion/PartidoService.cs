@@ -73,7 +73,7 @@ namespace API_FutbolStats.Service.Implementacion
                                                         join rp in _context.ResultadoPartidos on p.IdResultado equals rp.Id
                                                         join t in _context.Temporada on p.IdTemporada equals t.Id
                                                         where p.IdTemporada == idTemporada
-                                                        orderby p.Id
+                                                        orderby p.Fecha descending 
                                                         select new PartidoDtoStats
                                                         {
                                                             Id = p.Id,
