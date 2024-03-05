@@ -13,7 +13,11 @@ public partial class Equipo
 
     public string? Escudo { get; set; }
 
+    public int IdUsuario { get; set; }
+
     public virtual ICollection<Gole> Goles { get; set; } = new List<Gole>();
+
+    public virtual Usuario IdUsuarioNavigation { get; set; } = null!;
 
     public virtual ICollection<Jugador> Jugadors { get; set; } = new List<Jugador>();
 

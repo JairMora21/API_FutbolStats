@@ -9,5 +9,6 @@
         public string? Lugar { get; set; }
 
         public string? Escudo { get; set; }
+
     }
 }

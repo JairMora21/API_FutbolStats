@@ -44,6 +44,16 @@ namespace API_FutbolStats.Controllers
         }
 
         [HttpGet]
+        [Route("EquipoByUser/{id}")]
+        public async Task<IActionResult> EquipoByUser(int id)
+        {
+
+            APIResponse response = await _service.GetEquipoByUser(id);
+
+            return Ok(response);
+        }
+
+        [HttpGet]
         [Route("Jugadores/{idEquipo}")]
         public async Task<IActionResult> Jugadores(int idEquipo)
         {
@@ -79,7 +89,7 @@ namespace API_FutbolStats.Controllers
         [HttpDelete]
         [Route("DeleteJugador/{id}")]
        // [Authorize]
-        public async Task<IActionResult> AddJugador(int id)
+        public async Task<IActionResult> DeleteJugador(int id)
         {
             APIResponse response = await _service.DeleteJugador(id);
 

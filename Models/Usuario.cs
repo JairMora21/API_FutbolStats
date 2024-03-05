@@ -13,5 +13,7 @@ public partial class Usuario
 
     public string? Token { get; set; }
 
+    public virtual ICollection<Equipo> Equipos { get; set; } = new List<Equipo>();
+
     public virtual ICollection<HistorialRefreshToken> HistorialRefreshTokens { get; set; } = new List<HistorialRefreshToken>();
 }

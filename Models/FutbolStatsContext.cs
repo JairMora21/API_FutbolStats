@@ -44,7 +44,6 @@ public partial class FutbolStatsContext : DbContext
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ClasificacionTemporadum>(entity =>
@@ -67,6 +66,7 @@ public partial class FutbolStatsContext : DbContext
                 .HasMaxLength(255)
                 .IsUnicode(false)
                 .HasColumnName("escudo");
+            entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
             entity.Property(e => e.Lugar)
                 .HasMaxLength(100)
                 .IsUnicode(false)
@@ -75,6 +75,11 @@ public partial class FutbolStatsContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("nombre");
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.Equipos)
+                .HasForeignKey(d => d.IdUsuario)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Equipo_Usuario");
         });
 
         modelBuilder.Entity<Gole>(entity =>
@@ -104,7 +109,7 @@ public partial class FutbolStatsContext : DbContext
 
         modelBuilder.Entity<HistorialRefreshToken>(entity =>
         {
-            entity.HasKey(e => e.IdHistorialToken).HasName("PK__Historia__9BD4D672F5FD26FA");
+            entity.HasKey(e => e.IdHistorialToken).HasName("PK__Historia__9BD4D67292CC672E");
 
             entity.ToTable("HistorialRefreshToken");
 
@@ -130,7 +135,7 @@ public partial class FutbolStatsContext : DbContext
 
             entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.HistorialRefreshTokens)
                 .HasForeignKey(d => d.IdUsuario)
-                .HasConstraintName("FK__Historial__id_us__3C34F16F");
+                .HasConstraintName("FK__Historial__id_us__5441852A");
         });
 
         modelBuilder.Entity<Jugador>(entity =>
