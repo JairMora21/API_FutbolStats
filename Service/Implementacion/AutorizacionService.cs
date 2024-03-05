@@ -72,11 +72,16 @@ namespace API_FutbolStats.Service.Implementacion
                 FechaExpiracion = DateTime.UtcNow.AddDays(5)
             };
 
+            DateTime fechaExpiracion = DateTime.UtcNow.AddDays(5);
+            string fechaFormateada = fechaExpiracion.ToString("yyyy-MM-dd HH:mm:ss");
+
+
             await _context.HistorialRefreshTokens.AddAsync(historialRefreshToken);
             await _context.SaveChangesAsync();
 
-            return new AutorizacionResponse { Token = token, RefreshToken = refreshToken, Resultado = true, Msg="Ok" };
+            return new AutorizacionResponse { Token = token, RefreshToken = refreshToken, Resultado = true, Msg="Ok", Expiration = fechaFormateada };
         }
+
 
         public async Task<AutorizacionResponse> DevolverToken(AutorizacionRequest autorizacion)
         {
@@ -87,7 +92,9 @@ namespace API_FutbolStats.Service.Implementacion
 
             if(usuario_encontrado == null)
             {
-                return await Task.FromResult<AutorizacionResponse>(null);
+                // return await Task.FromResult<AutorizacionResponse>(null);
+                return new AutorizacionResponse { Token = null, RefreshToken = null, Resultado = false, Msg = "Usuario / Contraseña incorrecto" };
+
             }
 
             string tokenCreado = GenerarToken(usuario_encontrado.Id.ToString());
