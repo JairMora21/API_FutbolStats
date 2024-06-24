@@ -45,6 +45,7 @@ namespace API_FutbolStats.Service.Implementacion
                                     {
                                         Id = x.Id,
                                         Clasificacion = x.IdClasificacionNavigation.Clasificacion,
+                                        idClasificacion = x.IdClasificacion,
                                         Equipo = x.IdEquipoNavigation.Nombre,
                                         NoTemporada = x.NoTemporada,
                                         NombreTemporada = x.NombreTemporada,
@@ -93,6 +94,7 @@ namespace API_FutbolStats.Service.Implementacion
                     {
                         Id = x.Id,
                         Clasificacion = x.IdClasificacionNavigation.Clasificacion,
+                        idClasificacion = x.IdClasificacion,
                         Equipo = x.IdEquipoNavigation.Nombre,
                         NoTemporada = x.NoTemporada,
                         NombreTemporada = x.NombreTemporada,
@@ -147,6 +149,7 @@ namespace API_FutbolStats.Service.Implementacion
                     {
                         Id = x.Id,
                         Clasificacion = x.IdClasificacionNavigation.Clasificacion,
+                        idClasificacion = x.IdClasificacion,
                         Equipo = x.IdEquipoNavigation.Nombre,
                         NoTemporada = x.NoTemporada,
                         NombreTemporada = x.NombreTemporada,
@@ -215,6 +218,16 @@ namespace API_FutbolStats.Service.Implementacion
                 {
                     _response.IsSuccess = false;
                     _response.ErrorMessages = new List<string> { "No se encontró la temporada a eliminar o el id es inválido" };
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+
+                bool existePartido = await _context.Partidos.AnyAsync(x => x.IdTemporada == id);
+
+                if (existePartido)
+                {
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string> { "No se puede eliminar la temporada porque tiene partidos asociados" };
                     _response.statusCode = HttpStatusCode.BadRequest;
                     return _response;
                 }

@@ -88,7 +88,7 @@ namespace API_FutbolStats.Controllers
 
         [HttpDelete]
         [Route("DeleteJugador/{id}")]
-       // [Authorize]
+        [Authorize]
         public async Task<IActionResult> DeleteJugador(int id)
         {
             APIResponse response = await _service.DeleteJugador(id);

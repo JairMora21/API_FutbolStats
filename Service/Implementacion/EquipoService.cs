@@ -180,6 +180,7 @@ namespace API_FutbolStats.Service.Implementacion
                     .Select(p => new JugadorDto
                     {
                         Id = p.Id,
+                        IdPosicion = p.IdPosicion,
                         Posicion = p.IdPosicionNavigation.Posicion,
                         Equipo = p.IdEquipoNavigation.Nombre,
                         Nombre = p.Nombre,
@@ -235,6 +236,7 @@ namespace API_FutbolStats.Service.Implementacion
                      .Select(p => new JugadorDto
                      {
                          Id = p.Id,
+                         IdPosicion = p.IdPosicion,
                          Posicion = p.IdPosicionNavigation.Posicion,
                          Equipo = p.IdEquipoNavigation.Nombre,
                          Nombre = p.Nombre,

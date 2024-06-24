@@ -5,7 +5,7 @@ namespace API_FutbolStats.Models.DtoCreate
     public class PartidoDtoCreate
     {
         [Required(ErrorMessage = "El campo Equipo es obligatorio.")]
-        public int? IdEquipo { get; set; }
+        public int IdEquipo { get; set; }
 
         [Required(ErrorMessage = "El campo Temporada es obligatorio.")]
         public int? IdTemporada { get; set; }

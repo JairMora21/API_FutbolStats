@@ -17,5 +17,7 @@
         public string? Posicion { get; set; }
 
         public string? NombreTemporada { get; set; }
+
+        public int? idClasificacion { get; set; }    
     }
 }

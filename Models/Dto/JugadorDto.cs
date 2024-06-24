@@ -4,6 +4,8 @@
     {
         public int Id { get; set; }
 
+        public int IdPosicion { get; set; }
+
         public string Posicion { get; set; }
 
         public string Equipo { get; set; }

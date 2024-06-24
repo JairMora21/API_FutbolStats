@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
+using Azure;
 
 namespace API_FutbolStats.Controllers
 {
@@ -50,10 +51,11 @@ namespace API_FutbolStats.Controllers
 
         [HttpPost]
         [Route("AddTemporada")]
-        [Authorize]
+       // [Authorize]
         public async Task<IActionResult> AddTemporada([FromBody] TemporadaDtoCreate temporadaDto)
         {
             APIResponse response = new APIResponse();
+
 
             if (ModelState.IsValid)
             {
@@ -66,6 +68,7 @@ namespace API_FutbolStats.Controllers
 
 
             return BadRequest(response);
+
         }
 
         [HttpDelete]
@@ -74,9 +77,11 @@ namespace API_FutbolStats.Controllers
         public async Task<IActionResult> DeleteTemporada(int id)
         {
             APIResponse response = await _service.DeleteTemporada(id);
-
             return Ok(response);
+
         }
+
+
 
         [HttpPut]
         [Route("UpdateTemporada/{id}")]

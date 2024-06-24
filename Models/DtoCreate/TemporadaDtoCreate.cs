@@ -12,7 +12,7 @@ namespace API_FutbolStats.Models.DtoCreate
         public int? NoTemporada { get; set; }
 
         [Required(ErrorMessage = "El campo Fecha Inicio es obligatorio.")]
-        public DateOnly? FechaInicio { get; set; }
+        public DateOnly FechaInicio { get; set; }
 
         public string? NombreTemporada { get; set; }
     }
