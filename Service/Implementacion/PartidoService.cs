@@ -106,23 +106,47 @@ namespace API_FutbolStats.Service.Implementacion
 
         public async Task<APIResponse> AddPartido(PartidoDtoCreate partidoDto)
         {
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                Partido partido = _mapper.Map<Partido>(partidoDto);
+                try
+                {
+                    Partido partido = _mapper.Map<Partido>(partidoDto);
 
-                _context.Partidos.Add(partido);
-                await _context.SaveChangesAsync();
+                    _context.Partidos.Add(partido);
+                    await _context.SaveChangesAsync();
 
-                _response.IsSuccess = true;
-                _response.statusCode = HttpStatusCode.OK;
+                    foreach (var playerStatDto in partidoDto.PlayerStats)
+                    {
+                        PlayerStat playerStat = _mapper.Map<PlayerStat>(playerStatDto);
 
-                return _response;
-            }
-            catch (Exception ex)
-            {
-                _response.ErrorMessages = new List<string> { $"Error:{ex}" };
-                _response.IsSuccess = false;
-                _response.statusCode = HttpStatusCode.InternalServerError;
+                        if (playerStat.Goles > 0)
+                        {
+                            GolesDtoCreate golesDtoCreate = new GolesDtoCreate
+                            {
+                                IdJugador = playerStat.Id,
+
+                            };
+
+
+
+                        }
+
+                        await _context.SaveChangesAsync();
+
+                        await transaction.CommitAsync();
+
+                        _response.IsSuccess = true;
+                        _response.statusCode = HttpStatusCode.OK;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+
+                    _response.IsSuccess = false;
+                    _response.statusCode = HttpStatusCode.InternalServerError;
+                    _response.ErrorMessages = new List<string> { $"Error:{ex}" };
+                }
 
                 return _response;
             }
