@@ -15,6 +15,8 @@ public partial class Gole
 
     public int? IdEquipo { get; set; }
 
+    public int? Goles { get; set; }
+
     public virtual Equipo? IdEquipoNavigation { get; set; }
 
     public virtual Jugador? IdJugadorNavigation { get; set; }

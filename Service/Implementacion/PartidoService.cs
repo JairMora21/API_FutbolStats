@@ -73,7 +73,7 @@ namespace API_FutbolStats.Service.Implementacion
                                                         join rp in _context.ResultadoPartidos on p.IdResultado equals rp.Id
                                                         join t in _context.Temporada on p.IdTemporada equals t.Id
                                                         where p.IdTemporada == idTemporada
-                                                        orderby p.Fecha descending 
+                                                        orderby p.Fecha descending
                                                         select new PartidoDtoStats
                                                         {
                                                             Id = p.Id,
@@ -110,7 +110,19 @@ namespace API_FutbolStats.Service.Implementacion
             {
                 try
                 {
-                    Partido partido = _mapper.Map<Partido>(partidoDto);
+                    // Mapeo manual de Result a Partido
+                    var result = partidoDto.Result;
+                    var partido = new Partido
+                    {
+                        IdEquipo = result.IdEquipo,
+                        IdTemporada = result.IdTemporada,
+                        IdTipoPartido = result.IdTipoPartido,
+                        IdResultado = result.IdResultado,
+                        Fecha = result.Fecha, 
+                        NombreRival = result.NombreRival,
+                        GolesFavor = result.GolesFavor,
+                        GolesContra = result.GolesContra
+                    };
 
                     _context.Partidos.Add(partido);
                     await _context.SaveChangesAsync();
@@ -119,25 +131,69 @@ namespace API_FutbolStats.Service.Implementacion
                     {
                         PlayerStat playerStat = _mapper.Map<PlayerStat>(playerStatDto);
 
+                        PartidoJugadoDtoCreate partidoJugado = new PartidoJugadoDtoCreate
+                        {
+                            IdJugador = playerStat.Id,
+                            IdPartido = partido.Id,
+                            IdTemporada = partidoDto.Result.IdTemporada,
+                            IdEquipo = partido.IdEquipo
+                        };
+
+                        PartidosJugado jugado = _mapper.Map<PartidosJugado>(partidoJugado);
+                        _context.PartidosJugados.Add(jugado);
+
+
                         if (playerStat.Goles > 0)
                         {
                             GolesDtoCreate golesDtoCreate = new GolesDtoCreate
                             {
                                 IdJugador = playerStat.Id,
-
+                                Goles = playerStat.Goles,
+                                IdPartido = partido.Id,
+                                IdEquipo = partido.IdEquipo,
+                                IdTemporada = partidoDto.Result.IdTemporada,
                             };
 
-
-
+                            Gole gol = _mapper.Map<Gole>(golesDtoCreate);
+                            _context.Goles.Add(gol);
                         }
+                        if (playerStat.Amarillas > 0)
+                        {
+                            TarjetaDtoCreate tarjetaDtoCreate = new TarjetaDtoCreate
+                            {
+                                IdJugador = playerStat.Id,
+                                IdPartido = partido.Id,
+                                IdTipoTarjeta = 1,
+                                IdEquipo = partido.IdEquipo,
+                                IdTemporada = partidoDto.Result.IdTemporada,
+                                Tarjetas = playerStat.Amarillas
+                            };
 
-                        await _context.SaveChangesAsync();
+                            Tarjetum tarjeta = _mapper.Map<Tarjetum>(tarjetaDtoCreate);
+                            _context.Tarjeta.Add(tarjeta);
+                        }
+                        if (playerStat.Rojas > 0)
+                        {
+                            TarjetaDtoCreate tarjetaDtoCreate = new TarjetaDtoCreate
+                            {
+                                IdJugador = playerStat.Id,
+                                IdPartido = partido.Id,
+                                IdTipoTarjeta = 2,
+                                IdEquipo = partido.IdEquipo,
+                                IdTemporada = partidoDto.Result.IdTemporada
+                            };
 
-                        await transaction.CommitAsync();
-
-                        _response.IsSuccess = true;
-                        _response.statusCode = HttpStatusCode.OK;
+                            Tarjetum tarjeta = _mapper.Map<Tarjetum>(tarjetaDtoCreate);
+                            _context.Tarjeta.Add(tarjeta);
+                        }
                     }
+
+                    await _context.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+
+                    _response.IsSuccess = true;
+                    _response.statusCode = HttpStatusCode.OK;
                 }
                 catch (Exception ex)
                 {

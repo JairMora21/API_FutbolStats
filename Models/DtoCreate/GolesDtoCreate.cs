@@ -16,5 +16,8 @@ namespace API_FutbolStats.Models.DtoCreate
 
         [Required(ErrorMessage = "El campo IdEquipo es obligatorio.")]
         public int? IdEquipo { get; set; }
+
+        [Required(ErrorMessage = "El campo Goles es obligatorio.")]
+        public int? Goles { get; set; }
     }
 }

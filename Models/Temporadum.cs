@@ -21,6 +21,8 @@ public partial class Temporadum
 
     public string? NombreTemporada { get; set; }
 
+    public bool? IsDeleted { get; set; }
+
     public virtual ICollection<Gole> Goles { get; set; } = new List<Gole>();
 
     public virtual ClasificacionTemporadum? IdClasificacionNavigation { get; set; }

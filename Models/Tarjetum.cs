@@ -17,6 +17,8 @@ public partial class Tarjetum
 
     public int? IdEquipo { get; set; }
 
+    public int? Tarjetas { get; set; }
+
     public virtual Equipo? IdEquipoNavigation { get; set; }
 
     public virtual Jugador? IdJugadorNavigation { get; set; }

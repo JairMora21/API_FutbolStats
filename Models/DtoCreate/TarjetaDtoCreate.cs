@@ -12,5 +12,7 @@
         public int? IdTemporada { get; set; }
 
         public int? IdEquipo { get; set; }
+
+        public int? Tarjetas { get; set; }
     }
 }
