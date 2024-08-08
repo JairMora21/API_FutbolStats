@@ -163,7 +163,7 @@ namespace API_FutbolStats.Service.Implementacion
                             {
                                 IdJugador = playerStat.Id,
                                 IdPartido = partido.Id,
-                                IdTipoTarjeta = 1,
+                                IdTipoTarjeta = 2,
                                 IdEquipo = partido.IdEquipo,
                                 IdTemporada = partidoDto.Result.IdTemporada,
                                 Tarjetas = playerStat.Amarillas
@@ -178,9 +178,10 @@ namespace API_FutbolStats.Service.Implementacion
                             {
                                 IdJugador = playerStat.Id,
                                 IdPartido = partido.Id,
-                                IdTipoTarjeta = 2,
+                                IdTipoTarjeta = 1,
                                 IdEquipo = partido.IdEquipo,
-                                IdTemporada = partidoDto.Result.IdTemporada
+                                IdTemporada = partidoDto.Result.IdTemporada,
+                                Tarjetas = playerStat.Rojas
                             };
 
                             Tarjetum tarjeta = _mapper.Map<Tarjetum>(tarjetaDtoCreate);
@@ -312,14 +313,14 @@ namespace API_FutbolStats.Service.Implementacion
                 List<GolPartidoDtoStats> Goles = await (from g in _context.Goles
                                                         join j in _context.Jugadors on g.IdJugador equals j.Id
                                                         where g.IdPartido == id
-                                                        group g by new { j.Id, j.Nombre } into grouped
                                                         select new GolPartidoDtoStats
                                                         {
-                                                            Nombre = grouped.Key.Nombre,
-                                                            Cantidad = grouped.Count()
+                                                            Nombre = j.Nombre,
+                                                            Cantidad = g.Goles ?? 0
                                                         })
-                            .OrderByDescending(x => x.Cantidad)
-                            .ToListAsync();
+                                                .OrderByDescending(x => x.Cantidad)
+                                                .ToListAsync();
+
 
                 List<TarjetaPartidoDtoStats> tarjetas = await (from g in _context.Tarjeta
                                                                join j in _context.Jugadors on g.IdJugador equals j.Id
@@ -329,9 +330,11 @@ namespace API_FutbolStats.Service.Implementacion
                                                                {
                                                                    Nombre = j.Nombre,
                                                                    Tarjeta = tt.Tarjeta,
-                                                                   idTipoTarjeta = tt.Id
+                                                                   idTipoTarjeta = tt.Id,
+                                                                   Cantidad = g.Tarjetas ?? 0 
                                                                })
-                                                                .ToListAsync();
+                                                               .ToListAsync();
+
 
                 List<PartidoJugadoDtoStats> participaciones = await (from g in _context.PartidosJugados
                                                                      join j in _context.Jugadors on g.IdJugador equals j.Id

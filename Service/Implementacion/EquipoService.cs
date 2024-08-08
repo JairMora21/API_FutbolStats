@@ -432,12 +432,13 @@ namespace API_FutbolStats.Service.Implementacion
                     .GroupBy(t => t.IdJugador)
                     .Select(t => new
                     {
-                        TarjetasRojasTemp = t.Count(t => t.IdTipoTarjeta == 1 && t.IdTemporada == idTemporada),
-                        TarjetasAmarillaTemp = t.Count(t => t.IdTipoTarjeta == 2 && t.IdTemporada == idTemporada),
-                        TarjetasRojasTotal = t.Count(t => t.IdTipoTarjeta == 1),
-                        TarjetasAmarillaTotal = t.Count(t => t.IdTipoTarjeta == 2)
+                        TarjetasRojasTemp = t.Sum(t => t.IdTipoTarjeta == 1 && t.IdTemporada == idTemporada ? (t.Tarjetas ?? 0) : 0),
+                        TarjetasAmarillaTemp = t.Sum(t => t.IdTipoTarjeta == 2 && t.IdTemporada == idTemporada ? (t.Tarjetas ?? 0) : 0),
+                        TarjetasRojasTotal = t.Sum(t => t.IdTipoTarjeta == 1 ? (t.Tarjetas ?? 0) : 0),
+                        TarjetasAmarillaTotal = t.Sum(t => t.IdTipoTarjeta == 2 ? (t.Tarjetas ?? 0) : 0)
                     })
                     .FirstOrDefaultAsync();
+
 
                 if (golesStats != null)
                 {
@@ -544,10 +545,11 @@ namespace API_FutbolStats.Service.Implementacion
                    .GroupBy(x => x.IdEquipo)
                    .Select(x => new
                    {
-                       Rojas = x.Count(x => x.IdTipoTarjeta == 1),
-                       Amarillas = x.Count(x => x.IdTipoTarjeta == 2),
+                       Rojas = x.Sum(x => x.IdTipoTarjeta == 1 ? (x.Tarjetas ?? 0) : 0),
+                       Amarillas = x.Sum(x => x.IdTipoTarjeta == 2 ? (x.Tarjetas ?? 0) : 0),
                    })
                    .FirstOrDefaultAsync();
+
 
                 if (statsPartidos != null)
                 {
@@ -808,9 +810,9 @@ namespace API_FutbolStats.Service.Implementacion
                                                          {
                                                              Id = grouped.Key.Id,
                                                              Nombre = grouped.Key.Nombre,
-                                                             Amarillas = grouped.Count(x => x.IdTipoTarjeta == ((int)TipoTarjeta.Amarilla)),
-                                                             Rojas = grouped.Count(x => x.IdTipoTarjeta == ((int)TipoTarjeta.Roja)),
-                                                             Total = grouped.Count(x => x.IdTipoTarjeta == ((int)TipoTarjeta.Amarilla) || x.IdTipoTarjeta == ((int)TipoTarjeta.Roja))
+                                                             Amarillas = grouped.Sum(x => x.IdTipoTarjeta == (int)TipoTarjeta.Amarilla ? (x.Tarjetas ?? 0) : 0),
+                                                             Rojas = grouped.Sum(x => x.IdTipoTarjeta == (int)TipoTarjeta.Roja ? (x.Tarjetas ?? 0) : 0),
+                                                             Total = grouped.Sum(x => (x.IdTipoTarjeta == (int)TipoTarjeta.Amarilla || x.IdTipoTarjeta == (int)TipoTarjeta.Roja) ? (x.Tarjetas ?? 0) : 0)
                                                          });
 
 
