@@ -241,35 +241,183 @@ namespace API_FutbolStats.Service.Implementacion
             }
         }
 
-        public async Task<APIResponse> UpdatePartido(PartidoDtoUpdate partidoDto, int id)
+
+        public async Task<APIResponse> UpdatePartido(PartidoDtoUpdate partidoDto, int idPartido)
         {
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                Partido partido = await _context.Partidos.FindAsync(id);
-
-                if (partido == null)
+                try
                 {
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages = new List<string> { "No se encontró la temporada a actualizar" };
-                    _response.statusCode = HttpStatusCode.NotFound;
-                    return _response;
+                    // Buscar el partido existente
+                    var partidoExistente = await _context.Partidos.FindAsync(idPartido);
+                    if (partidoExistente == null)
+                    {
+                        _response.IsSuccess = false;
+                        _response.statusCode = HttpStatusCode.NotFound;
+                        _response.ErrorMessages = new List<string> { "Partido no encontrado" };
+                        return _response;
+                    }
+
+                    // Actualizar los datos del partido
+                    partidoExistente.IdEquipo = partidoDto.Result.IdEquipo;
+                    partidoExistente.IdTemporada = partidoDto.Result.IdTemporada;
+                    partidoExistente.IdTipoPartido = partidoDto.Result.IdTipoPartido;
+                    partidoExistente.IdResultado = partidoDto.Result.IdResultado;
+                    partidoExistente.Fecha = partidoDto.Result.Fecha;
+                    partidoExistente.NombreRival = partidoDto.Result.NombreRival;
+                    partidoExistente.GolesFavor = partidoDto.Result.GolesFavor;
+                    partidoExistente.GolesContra = partidoDto.Result.GolesContra;
+
+                    _context.Partidos.Update(partidoExistente);
+
+                    var participantesExistentes = await _context.PartidosJugados.Where(pj => pj.IdPartido == idPartido).ToListAsync();
+
+                    var jugadoresAEliminar = participantesExistentes.Where(pe => !partidoDto.PlayerStats.Any(ps => ps.Id == pe.IdJugador)).ToList();
+                   
+                    foreach (var jugadorAEliminar in jugadoresAEliminar)
+                    {
+                        // Eliminar la participación del jugador
+                        _context.PartidosJugados.Remove(jugadorAEliminar);
+
+                        // Eliminar todos los goles del jugador en este partido
+                        var golesAEliminar = await _context.Goles.Where(g => g.IdPartido == idPartido && g.IdJugador == jugadorAEliminar.IdJugador).ToListAsync();
+                        if (golesAEliminar.Any())
+                        {
+                            _context.Goles.RemoveRange(golesAEliminar);
+                        }
+
+                        // Eliminar todas las tarjetas del jugador en este partido
+                        var tarjetasAEliminar = await _context.Tarjeta.Where(t => t.IdPartido == idPartido && t.IdJugador == jugadorAEliminar.IdJugador).ToListAsync();
+                        if (tarjetasAEliminar.Any())
+                        {
+                            _context.Tarjeta.RemoveRange(tarjetasAEliminar);
+                        }
+                    }
+
+                    //Actualizar o agregar participantes, goles y tarjetas
+
+                    // Actualizar o agregar participantes, goles y tarjetas
+                    foreach (var playerStatDto in partidoDto.PlayerStats)
+                    {
+                        // Actualizar o agregar participantes
+                        var participanteExistente = await _context.PartidosJugados
+                            .FirstOrDefaultAsync(p => p.IdPartido == idPartido && p.IdJugador == playerStatDto.Id);
+
+                        if (participanteExistente == null)
+                        {
+                            var nuevoParticipante = new PartidosJugado
+                            {
+                                IdJugador = playerStatDto.Id,
+                                IdPartido = idPartido,
+                                IdTemporada = partidoDto.Result.IdTemporada,
+                                IdEquipo = partidoExistente.IdEquipo
+                            };
+                            _context.PartidosJugados.Add(nuevoParticipante);
+                        }
+                        // Si el participante ya existe, no necesitas hacer nada a menos que tengas más campos en PartidosJugados que necesiten actualización.
+
+                        // Actualizar o agregar goles
+                        var golExistente = await _context.Goles
+                            .FirstOrDefaultAsync(g => g.IdPartido == idPartido && g.IdJugador == playerStatDto.Id);
+                        if (golExistente != null)
+                        {
+                            if (playerStatDto.Goles > 0)
+                            {
+                                golExistente.Goles = playerStatDto.Goles;
+                                _context.Goles.Update(golExistente);
+                            }
+                            else
+                            {
+                                _context.Goles.Remove(golExistente); // Elimina si el número de goles es 0
+                            }
+                        }
+                        else if (playerStatDto.Goles > 0)
+                        {
+                            var nuevoGol = new Gole
+                            {
+                                IdJugador = playerStatDto.Id,
+                                Goles = playerStatDto.Goles,
+                                IdPartido = idPartido,
+                                IdEquipo = partidoExistente.IdEquipo,
+                                IdTemporada = partidoDto.Result.IdTemporada
+                            };
+                            _context.Goles.Add(nuevoGol);
+                        }
+
+                        // Actualizar o agregar tarjetas amarillas
+                        var tarjetaAmarillaExistente = await _context.Tarjeta
+                            .FirstOrDefaultAsync(t => t.IdPartido == idPartido && t.IdJugador == playerStatDto.Id && t.IdTipoTarjeta == 2);
+                        if (tarjetaAmarillaExistente != null)
+                        {
+                            if (playerStatDto.Amarillas > 0)
+                            {
+                                tarjetaAmarillaExistente.Tarjetas = playerStatDto.Amarillas;
+                                _context.Tarjeta.Update(tarjetaAmarillaExistente);
+                            }
+                            else
+                            {
+                                _context.Tarjeta.Remove(tarjetaAmarillaExistente); // Elimina si el número de tarjetas es 0
+                            }
+                        }
+                        else if (playerStatDto.Amarillas > 0)
+                        {
+                            var nuevaTarjetaAmarilla = new Tarjetum
+                            {
+                                IdJugador = playerStatDto.Id,
+                                IdPartido = idPartido,
+                                IdTipoTarjeta = 2,
+                                IdEquipo = partidoExistente.IdEquipo,
+                                IdTemporada = partidoDto.Result.IdTemporada,
+                                Tarjetas = playerStatDto.Amarillas
+                            };
+                            _context.Tarjeta.Add(nuevaTarjetaAmarilla);
+                        }
+
+                        // Actualizar o agregar tarjetas rojas
+                        var tarjetaRojaExistente = await _context.Tarjeta
+                            .FirstOrDefaultAsync(t => t.IdPartido == idPartido && t.IdJugador == playerStatDto.Id && t.IdTipoTarjeta == 1);
+                        if (tarjetaRojaExistente != null)
+                        {
+                            if (playerStatDto.Rojas > 0)
+                            {
+                                tarjetaRojaExistente.Tarjetas = playerStatDto.Rojas;
+                                _context.Tarjeta.Update(tarjetaRojaExistente);
+                            }
+                            else
+                            {
+                                _context.Tarjeta.Remove(tarjetaRojaExistente); // Elimina si el número de tarjetas es 0
+                            }
+                        }
+                        else if (playerStatDto.Rojas > 0)
+                        {
+                            var nuevaTarjetaRoja = new Tarjetum
+                            {
+                                IdJugador = playerStatDto.Id,
+                                IdPartido = idPartido,
+                                IdTipoTarjeta = 1,
+                                IdEquipo = partidoExistente.IdEquipo,
+                                IdTemporada = partidoDto.Result.IdTemporada,
+                                Tarjetas = playerStatDto.Rojas
+                            };
+                            _context.Tarjeta.Add(nuevaTarjetaRoja);
+                        }
+                    }
+
+                    // Guardar cambios y confirmar transacción
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    _response.IsSuccess = true;
+                    _response.statusCode = HttpStatusCode.OK;
                 }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
 
-                _mapper.Map(partidoDto, partido);
-
-                _context.Partidos.Update(partido);
-                await _context.SaveChangesAsync();
-
-                _response.IsSuccess = true;
-                _response.statusCode = HttpStatusCode.OK;
-
-                return _response;
-            }
-            catch (Exception ex)
-            {
-                _response.ErrorMessages = new List<string> { $"Error:{ex}" };
-                _response.IsSuccess = false;
-                _response.statusCode = HttpStatusCode.InternalServerError;
+                    _response.IsSuccess = false;
+                    _response.statusCode = HttpStatusCode.InternalServerError;
+                    _response.ErrorMessages = new List<string> { $"Error:{ex}" };
+                }
 
                 return _response;
             }
@@ -315,6 +463,7 @@ namespace API_FutbolStats.Service.Implementacion
                                                         where g.IdPartido == id
                                                         select new GolPartidoDtoStats
                                                         {
+                                                            Id = j.Id,
                                                             Nombre = j.Nombre,
                                                             Cantidad = g.Goles ?? 0
                                                         })
@@ -328,6 +477,7 @@ namespace API_FutbolStats.Service.Implementacion
                                                                where g.IdPartido == id
                                                                select new TarjetaPartidoDtoStats
                                                                {
+                                                                   Id = j.Id,
                                                                    Nombre = j.Nombre,
                                                                    Tarjeta = tt.Tarjeta,
                                                                    idTipoTarjeta = tt.Id,
@@ -342,6 +492,7 @@ namespace API_FutbolStats.Service.Implementacion
                                                                      group j by new { j.Dorsal, j.Nombre } into grouped
                                                                      select new PartidoJugadoDtoStats
                                                                      {
+                                                                         Id = grouped.FirstOrDefault().Id,
                                                                          Nombre = grouped.Key.Nombre,
                                                                          Dorsal = grouped.Key.Dorsal
                                                                      })
@@ -371,5 +522,7 @@ namespace API_FutbolStats.Service.Implementacion
             }
 
         }
+
+
     }
 }
