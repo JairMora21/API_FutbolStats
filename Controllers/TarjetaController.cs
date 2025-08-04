@@ -60,7 +60,7 @@ namespace API_FutbolStats.Controllers
         [HttpDelete]
         [Route("DeleteTarjeta/{id}")]
         [Authorize]
-        public async Task<IActionResult> DeletePartido(int id)
+        public async Task<IActionResult> DeleteTarjeta(int id)
         {
             APIResponse response = await _service.DeleteTarjetas(id);
 
@@ -68,9 +68,9 @@ namespace API_FutbolStats.Controllers
         }
 
         [HttpPut]
-        [Route("UpdatePartido/{id}")]
+        [Route("UpdateTarjeta/{id}")]
         [Authorize]
-        public async Task<IActionResult> UpdatePartido([FromBody] TarjetaDtoUpdate tarjetaDto, int id)
+        public async Task<IActionResult> UpdateTarjeta([FromBody] TarjetaDtoUpdate tarjetaDto, int id)
         {
             APIResponse response = new APIResponse();
             if (ModelState.IsValid && id != 0)
