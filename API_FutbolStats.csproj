@@ -24,4 +24,8 @@
     <Folder Include="Release\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="API_FutbolStats.Tests/**" />
+  </ItemGroup>
+
 </Project>
