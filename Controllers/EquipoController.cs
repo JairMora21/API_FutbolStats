@@ -160,7 +160,7 @@ namespace API_FutbolStats.Controllers
 
             return Ok(response);
         }
-        //Nos dara la lista de top amarillas del equipo
+        //Nos dara la lista de top tarjetas rojas del equipo
         [HttpGet]
         [Route("TopRojas/{idEquipo}")]
         public async Task<IActionResult> TopRojas(int idEquipo, int? idTemporada = null)
