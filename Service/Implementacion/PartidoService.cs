@@ -489,10 +489,10 @@ namespace API_FutbolStats.Service.Implementacion
                 List<PartidoJugadoDtoStats> participaciones = await (from g in _context.PartidosJugados
                                                                      join j in _context.Jugadors on g.IdJugador equals j.Id
                                                                      where g.IdPartido == id
-                                                                     group j by new { j.Dorsal, j.Nombre } into grouped
+                                                                     group j by new { j.Id, j.Dorsal, j.Nombre } into grouped
                                                                      select new PartidoJugadoDtoStats
                                                                      {
-                                                                         Id = grouped.FirstOrDefault().Id,
+                                                                         Id = grouped.Key.Id,
                                                                          Nombre = grouped.Key.Nombre,
                                                                          Dorsal = grouped.Key.Dorsal
                                                                      })
@@ -513,7 +513,7 @@ namespace API_FutbolStats.Service.Implementacion
                 return _response;
 
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 _response.ErrorMessages = new List<string> { "Ocurrió un error al procesar la solicitud." };
                 _response.IsSuccess = false;
